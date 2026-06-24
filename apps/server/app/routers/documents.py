@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, get_db
@@ -10,7 +10,9 @@ from app.models.history import StatusHistory
 from app.models.mail import MailRecord
 from app.models.user import AppUser
 from app.schemas.mail import MailCreate, MailOut, PageOut, StatusUpdate
+from app.services.audit import log_action
 from app.services.numbering import allocate_and_insert
+from app.services.queries import build_mail_query
 
 router = APIRouter(tags=["documents"])
 _REG = {"entree": "E", "sortie": "S"}
@@ -41,6 +43,8 @@ def saisie(
             changed_by=user.id,
         )
     )
+    log_action(db, actor_id=user.id, action="create_record",
+               entity="mail_record", entity_id=str(rec.id))
     db.commit()
     db.refresh(rec)
     return rec
@@ -59,24 +63,7 @@ def consultation(
     _: AppUser = Depends(get_current_user),
 ) -> PageOut:
     code = _reg_code(register)
-    stmt = select(MailRecord).where(MailRecord.register == code)
-    if type_document:
-        stmt = stmt.where(MailRecord.type_document == type_document)
-    if statut:
-        stmt = stmt.where(MailRecord.dernier_statut == statut)
-    if projet:
-        stmt = stmt.where(MailRecord.projet == projet)
-    if q:
-        like = f"%{q}%"
-        stmt = stmt.where(
-            or_(
-                MailRecord.no_ordre.ilike(like),
-                MailRecord.objet.ilike(like),
-                MailRecord.expediteur.ilike(like),
-                MailRecord.reference.ilike(like),
-                MailRecord.destinataire.ilike(like),
-            )
-        )
+    stmt = build_mail_query(code, q=q, type_document=type_document, statut=statut, projet=projet)
     total = db.scalar(select(func.count()).select_from(stmt.subquery()))
     rows = db.scalars(
         stmt.order_by(MailRecord.seq.desc()).offset((page - 1) * page_size).limit(page_size)
@@ -107,6 +94,8 @@ def update_status(
             note=body.note,
         )
     )
+    log_action(db, actor_id=user.id, action="update_status",
+               entity="mail_record", entity_id=str(rec.id))
     db.commit()
     db.refresh(rec)
     return rec

@@ -46,4 +46,11 @@ class PageOut(BaseModel):
     page_size: int
 
 
+class ReportOut(BaseModel):
+    register: str
+    generated_at: datetime
+    count: int
+    items: list[MailOut]
+
+
 Register = Literal["entree", "sortie"]

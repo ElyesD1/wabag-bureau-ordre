@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     jwt_refresh_ttl_days: int = 7
     app_version: str = "1.0.0"
     cors_origins: str = "http://localhost:5173"
+    pdf_dir: str = "./pdfs"
+    max_pdf_mb: int = 20
 
     @property
     def cors_list(self) -> list[str]:
