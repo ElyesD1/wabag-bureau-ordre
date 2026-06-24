@@ -1,8 +1,10 @@
 import type { ReactElement } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
+import { Dashboard } from "./pages/Dashboard";
 import { Journal } from "./pages/Journal";
 import { Login } from "./pages/Login";
+import { Users } from "./pages/Users";
 import { useAuth } from "./store/auth";
 
 function Protected({ children }: { children: ReactElement }) {
@@ -28,7 +30,9 @@ export default function App() {
           </Protected>
         }
       >
-        <Route path="/" element={<Navigate to="/entree" replace />} />
+        <Route path="/" element={<Navigate to="/tableau" replace />} />
+        <Route path="/tableau" element={<Dashboard />} />
+        <Route path="/utilisateurs" element={<Users />} />
         <Route path="/:register" element={<Journal />} />
       </Route>
     </Routes>

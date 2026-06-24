@@ -4,12 +4,12 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { IconDownload, IconEdit, IconIn, IconOut, IconPlus } from "../components/Icons";
+import { DocumentDrawer } from "../components/DocumentDrawer";
 import { SaisieDrawer } from "../components/SaisieDrawer";
 import { Sillage } from "../components/Sillage";
 import { StatusChip } from "../components/StatusChip";
-import { StatusModal } from "../components/StatusModal";
 import { useToast } from "../components/Toast";
-import type { MailRecord, PageResult } from "../types";
+import type { PageResult } from "../types";
 
 const PAGE_SIZE = 12;
 const fmtDate = (d: string) => d.split("-").reverse().join("/");
@@ -28,7 +28,7 @@ export function Journal() {
   const statutF = sp.get("statut") || "";
 
   const [drawer, setDrawer] = useState(false);
-  const [editDoc, setEditDoc] = useState<MailRecord | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
 
   const { data, isLoading } = useQuery<PageResult>({
@@ -200,7 +200,7 @@ export function Journal() {
                     <td>{r.projet || "—"}</td>
                     <td><StatusChip value={r.dernier_statut} /></td>
                     <td>
-                      <button className="rowbtn" title={t("modal.statusTitle")} onClick={() => setEditDoc(r)}>
+                      <button className="rowbtn" title={t("detail.edit")} onClick={() => setDetailId(r.id)}>
                         <IconEdit width={16} height={16} />
                       </button>
                     </td>
@@ -230,7 +230,7 @@ export function Journal() {
       </div>
 
       {drawer && <SaisieDrawer register={reg} onClose={() => setDrawer(false)} />}
-      {editDoc && <StatusModal register={reg} doc={editDoc} onClose={() => setEditDoc(null)} />}
+      {detailId && <DocumentDrawer docId={detailId} register={reg} onClose={() => setDetailId(null)} />}
     </main>
   );
 }

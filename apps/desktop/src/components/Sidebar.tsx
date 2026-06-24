@@ -38,9 +38,9 @@ export function Sidebar() {
 
       <nav className="nav">
         <div className="nav__sec">{t("nav.navigation")}</div>
-        <div className="nav__item" style={{ opacity: 0.5, cursor: "default" }} title="Bientôt disponible">
+        <NavLink to="/tableau" className={({ isActive }) => "nav__item" + (isActive ? " active" : "")}>
           <IconGrid className="nav__ic" /> {t("nav.dashboard")}
-        </div>
+        </NavLink>
 
         <div className="nav__sec">{t("nav.registers")}</div>
         <NavLink to="/entree" className={({ isActive }) => "nav__item" + (isActive ? " active" : "")}>
@@ -53,9 +53,11 @@ export function Sidebar() {
         </NavLink>
 
         <div className="nav__sec">{t("nav.admin")}</div>
-        <div className="nav__item" style={{ opacity: 0.5, cursor: "default" }} title="Bientôt disponible">
-          <IconUsers className="nav__ic" /> {t("nav.users")}
-        </div>
+        {user?.role === "admin" && (
+          <NavLink to="/utilisateurs" className={({ isActive }) => "nav__item" + (isActive ? " active" : "")}>
+            <IconUsers className="nav__ic" /> {t("nav.users")}
+          </NavLink>
+        )}
         <div className="nav__item" style={{ opacity: 0.5, cursor: "default" }} title="Bientôt disponible">
           <IconGear className="nav__ic" /> {t("nav.settings")}
         </div>

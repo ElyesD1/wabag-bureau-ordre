@@ -30,3 +30,32 @@ export interface User {
   role: string;
   preferred_locale: string;
 }
+
+export interface UserAdmin extends User {
+  is_active: boolean;
+  created_at: string;
+  last_login_at: string | null;
+}
+
+export interface StatusHistoryItem {
+  old_status: string | null;
+  new_status: string | null;
+  changed_at: string;
+  note: string | null;
+}
+
+export interface MailDetail extends MailRecord {
+  history: StatusHistoryItem[];
+  has_pdf: boolean;
+  attachment: { original_filename: string | null; byte_size: number; uploaded_at: string } | null;
+}
+
+export interface DashboardStats {
+  year: number;
+  totals: { entree: number; sortie: number; total: number };
+  by_status: { status: string; count: number }[];
+  by_type: { type: string; count: number }[];
+  by_month: { month: number; entree: number; sortie: number }[];
+  pending: number;
+  recent: MailRecord[];
+}

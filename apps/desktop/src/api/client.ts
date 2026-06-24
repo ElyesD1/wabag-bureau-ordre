@@ -76,4 +76,22 @@ export const api = {
     const res: Response = await req(`/export/journal.xlsx${qs({ register, ...params })}`, { raw: true });
     return res.blob();
   },
+  getDoc: (id: string) => req(`/documents/${id}`),
+  updateDoc: (id: string, data: Record<string, unknown>) =>
+    req(`/documents/${id}`, { method: "PATCH", json: data }),
+  viewPdf: async (id: string): Promise<Blob> => {
+    const res: Response = await req(`/documents/${id}/pdf`, { raw: true });
+    return res.blob();
+  },
+  stats: (year?: number) => req(`/stats/dashboard${year ? `?year=${year}` : ""}`),
+  setLocale: (locale: string) =>
+    req("/users/me/locale", { method: "PATCH", json: { preferred_locale: locale } }),
+  users: {
+    list: () => req("/users"),
+    create: (data: Record<string, unknown>) => req("/users", { method: "POST", json: data }),
+    update: (id: string, data: Record<string, unknown>) =>
+      req(`/users/${id}`, { method: "PATCH", json: data }),
+    resetPassword: (id: string, password: string) =>
+      req(`/users/${id}/password`, { method: "POST", json: { password } }),
+  },
 };
