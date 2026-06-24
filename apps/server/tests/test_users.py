@@ -67,3 +67,41 @@ def test_admin_cannot_self_deactivate(client):
     h = {"Authorization": f"Bearer {_tok(client, 'boss')}"}
     boss = [u for u in client.get("/users", headers=h).json() if u["username"] == "boss"][0]
     assert client.patch(f"/users/{boss['id']}", json={"is_active": False}, headers=h).status_code == 400
+
+
+def test_delete_fresh_user(client):
+    h = {"Authorization": f"Bearer {_tok(client, 'boss')}"}
+    u = client.post(
+        "/users", json={"username": "fresh", "full_name": "Fresh", "password": "secret9"}, headers=h
+    ).json()
+    assert client.delete(f"/users/{u['id']}", headers=h).status_code == 204
+    assert all(x["username"] != "fresh" for x in client.get("/users", headers=h).json())
+
+
+def test_cannot_delete_user_with_activity(client):
+    boss_h = {"Authorization": f"Bearer {_tok(client, 'boss')}"}
+    clerk_h = {"Authorization": f"Bearer {_tok(client, 'clerk1')}"}  # login + create = activity
+    client.post("/registers/entree/documents", json={"type_document": "Lettre", "objet": "x"}, headers=clerk_h)
+    clerk = [u for u in client.get("/users", headers=boss_h).json() if u["username"] == "clerk1"][0]
+    assert client.delete(f"/users/{clerk['id']}", headers=boss_h).status_code == 409
+
+
+def test_cannot_delete_self(client):
+    h = {"Authorization": f"Bearer {_tok(client, 'boss')}"}
+    boss = [u for u in client.get("/users", headers=h).json() if u["username"] == "boss"][0]
+    assert client.delete(f"/users/{boss['id']}", headers=h).status_code == 400
+
+
+def test_self_password_change(client):
+    h = {"Authorization": f"Bearer {_tok(client, 'clerk1')}"}
+    assert client.post(
+        "/users/me/password",
+        json={"current_password": "pw", "new_password": "brandnew1"},
+        headers=h,
+    ).status_code == 204
+    assert client.post("/auth/login", json={"username": "clerk1", "password": "brandnew1"}).status_code == 200
+    assert client.post(
+        "/users/me/password",
+        json={"current_password": "wrong", "new_password": "x123456"},
+        headers=h,
+    ).status_code == 400

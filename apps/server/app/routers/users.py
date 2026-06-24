@@ -2,12 +2,20 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, get_db, require_role
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 from app.models.user import AppUser
-from app.schemas.users import LocaleUpdate, PasswordReset, UserAdminOut, UserCreate, UserUpdate
+from app.schemas.users import (
+    LocaleUpdate,
+    PasswordReset,
+    SelfPasswordChange,
+    UserAdminOut,
+    UserCreate,
+    UserUpdate,
+)
 from app.services.audit import log_action
 
 router = APIRouter(tags=["users"])
@@ -49,6 +57,20 @@ def set_my_locale(
     return me
 
 
+@router.post("/users/me/password", status_code=204)
+def change_my_password(
+    body: SelfPasswordChange,
+    db: Session = Depends(get_db),
+    user: AppUser = Depends(get_current_user),
+):
+    me = db.get(AppUser, user.id)
+    if not verify_password(body.current_password, me.password_hash):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Mot de passe actuel incorrect")
+    me.password_hash = hash_password(body.new_password)
+    log_action(db, actor_id=me.id, action="self_password_change")
+    db.commit()
+
+
 @router.patch("/users/{user_id}", response_model=UserAdminOut)
 def update_user(
     user_id: uuid.UUID,
@@ -86,3 +108,27 @@ def reset_password(
     user.password_hash = hash_password(body.password)
     log_action(db, actor_id=admin.id, action="reset_password", entity="app_user", entity_id=str(user_id))
     db.commit()
+
+
+@router.delete("/users/{user_id}", status_code=204)
+def delete_user(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    admin: AppUser = Depends(require_role("admin")),
+):
+    user = db.get(AppUser, user_id)
+    if user is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Utilisateur introuvable")
+    if user.id == admin.id:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Vous ne pouvez pas supprimer votre propre compte")
+    try:
+        db.delete(user)
+        log_action(db, actor_id=admin.id, action="delete_user", entity="app_user", entity_id=str(user_id))
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "Cet utilisateur a une activité enregistrée (documents, journal). "
+            "Désactivez-le plutôt que de le supprimer.",
+        )
