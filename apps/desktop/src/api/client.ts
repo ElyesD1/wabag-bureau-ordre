@@ -86,6 +86,11 @@ export const api = {
   stats: (year?: number) => req(`/stats/dashboard${year ? `?year=${year}` : ""}`),
   setLocale: (locale: string) =>
     req("/users/me/locale", { method: "PATCH", json: { preferred_locale: locale } }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    req("/users/me/password", {
+      method: "POST",
+      json: { current_password: currentPassword, new_password: newPassword },
+    }),
   users: {
     list: () => req("/users"),
     create: (data: Record<string, unknown>) => req("/users", { method: "POST", json: data }),
@@ -93,5 +98,6 @@ export const api = {
       req(`/users/${id}`, { method: "PATCH", json: data }),
     resetPassword: (id: string, password: string) =>
       req(`/users/${id}/password`, { method: "POST", json: { password } }),
+    remove: (id: string) => req(`/users/${id}`, { method: "DELETE", raw: true }),
   },
 };

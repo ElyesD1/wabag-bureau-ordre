@@ -120,7 +120,15 @@
     "created": "Utilisateur créé",
     "updated": "Utilisateur mis à jour",
     "passwordReset": "Mot de passe réinitialisé",
-    "never": "Jamais"
+    "never": "Jamais",
+    "delete": "Supprimer",
+    "deleteTitle": "Supprimer l'utilisateur",
+    "deleteMsg": "Supprimer définitivement le compte de {{name}} ? Cette action est irréversible.",
+    "deleted": "Utilisateur supprimé",
+    "resetMsg": "Définir un nouveau mot de passe pour {{name}} :",
+    "deactivateMsg": "Désactiver le compte de {{name}} ? Il ne pourra plus se connecter.",
+    "activateMsg": "Réactiver le compte de {{name}} ?",
+    "confirm": "Confirmer"
   },
   "detail": {
     "title": "Document {{no}}",
@@ -133,6 +141,23 @@
     "changeStatus": "Modifier le statut",
     "createdOn": "Créé le",
     "saved": "Document mis à jour"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "Préférences et compte",
+    "language": "Langue de l'interface",
+    "languageHint": "Choisissez la langue d'affichage de l'application.",
+    "account": "Mon compte",
+    "role": "Rôle",
+    "changePassword": "Changer mon mot de passe",
+    "currentPassword": "Mot de passe actuel",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "passwordChanged": "Mot de passe modifié",
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "server": "Connexion serveur",
+    "serverHint": "Adresse de l'API du Bureau d'Ordre.",
+    "version": "Version"
   },
   "common": { "loading": "Chargement…", "auto": "auto", "close": "Fermer" }
 }

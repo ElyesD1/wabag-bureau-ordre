@@ -120,7 +120,15 @@
     "created": "User created",
     "updated": "User updated",
     "passwordReset": "Password reset",
-    "never": "Never"
+    "never": "Never",
+    "delete": "Delete",
+    "deleteTitle": "Delete user",
+    "deleteMsg": "Permanently delete {{name}}'s account? This cannot be undone.",
+    "deleted": "User deleted",
+    "resetMsg": "Set a new password for {{name}}:",
+    "deactivateMsg": "Deactivate {{name}}'s account? They will no longer be able to sign in.",
+    "activateMsg": "Reactivate {{name}}'s account?",
+    "confirm": "Confirm"
   },
   "detail": {
     "title": "Document {{no}}",
@@ -133,6 +141,23 @@
     "changeStatus": "Change status",
     "createdOn": "Created on",
     "saved": "Document updated"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Preferences and account",
+    "language": "Interface language",
+    "languageHint": "Choose the application display language.",
+    "account": "My account",
+    "role": "Role",
+    "changePassword": "Change my password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "passwordChanged": "Password changed",
+    "passwordMismatch": "Passwords do not match",
+    "server": "Server connection",
+    "serverHint": "Bureau d'Ordre API address.",
+    "version": "Version"
   },
   "common": { "loading": "Loading…", "auto": "auto", "close": "Close" }
 }

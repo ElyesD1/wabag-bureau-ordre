@@ -58,9 +58,9 @@ export function Sidebar() {
             <IconUsers className="nav__ic" /> {t("nav.users")}
           </NavLink>
         )}
-        <div className="nav__item" style={{ opacity: 0.5, cursor: "default" }} title="Bientôt disponible">
+        <NavLink to="/parametres" className={({ isActive }) => "nav__item" + (isActive ? " active" : "")}>
           <IconGear className="nav__ic" /> {t("nav.settings")}
-        </div>
+        </NavLink>
       </nav>
 
       <div className="side__foot">

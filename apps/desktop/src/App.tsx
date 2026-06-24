@@ -4,6 +4,7 @@ import { AppShell } from "./components/AppShell";
 import { Dashboard } from "./pages/Dashboard";
 import { Journal } from "./pages/Journal";
 import { Login } from "./pages/Login";
+import { Settings } from "./pages/Settings";
 import { Users } from "./pages/Users";
 import { useAuth } from "./store/auth";
 
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/tableau" replace />} />
         <Route path="/tableau" element={<Dashboard />} />
         <Route path="/utilisateurs" element={<Users />} />
+        <Route path="/parametres" element={<Settings />} />
         <Route path="/:register" element={<Journal />} />
       </Route>
     </Routes>
