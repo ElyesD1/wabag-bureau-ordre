@@ -53,4 +53,37 @@ class ReportOut(BaseModel):
     items: list[MailOut]
 
 
+class StatusHistoryOut(BaseModel):
+    old_status: Optional[str]
+    new_status: Optional[str]
+    changed_at: datetime
+    note: Optional[str]
+
+    model_config = {"from_attributes": True}
+
+
+class AttachmentOut(BaseModel):
+    original_filename: Optional[str]
+    byte_size: int
+    uploaded_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class MailDetailOut(MailOut):
+    history: list[StatusHistoryOut] = []
+    has_pdf: bool = False
+    attachment: Optional[AttachmentOut] = None
+
+
+class MailUpdate(BaseModel):
+    type_document: Optional[str] = Field(default=None, min_length=1, max_length=64)
+    reference: Optional[str] = Field(default=None, max_length=120)
+    objet: Optional[str] = Field(default=None, max_length=400)
+    expediteur: Optional[str] = Field(default=None, max_length=160)
+    projet: Optional[str] = Field(default=None, max_length=160)
+    destinataire: Optional[str] = Field(default=None, max_length=160)
+    date_remise_destinataire: Optional[date] = None
+
+
 Register = Literal["entree", "sortie"]

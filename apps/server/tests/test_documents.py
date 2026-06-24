@@ -58,3 +58,23 @@ def test_saisie_then_consultation_and_status(client):
     )
     assert r.status_code == 200
     assert r.json()["dernier_statut"] == "Clos"
+
+
+def test_edit_document_and_detail(client):
+    h = {"Authorization": f"Bearer {_token(client)}"}
+    doc = client.post(
+        "/registers/entree/documents",
+        json={"type_document": "Facture", "objet": "old"},
+        headers=h,
+    ).json()
+
+    r = client.patch(f"/documents/{doc['id']}", json={"objet": "nouveau", "projet": "STEP"}, headers=h)
+    assert r.status_code == 200, r.text
+    assert r.json()["objet"] == "nouveau"
+
+    client.patch(f"/documents/{doc['id']}/status", json={"new_status": "Clos"}, headers=h)
+
+    d = client.get(f"/documents/{doc['id']}", headers=h).json()
+    assert d["objet"] == "nouveau" and d["projet"] == "STEP"
+    assert d["has_pdf"] is False
+    assert len(d["history"]) >= 1

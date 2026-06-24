@@ -6,10 +6,20 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, get_db
+from app.models.audit import Attachment
 from app.models.history import StatusHistory
 from app.models.mail import MailRecord
 from app.models.user import AppUser
-from app.schemas.mail import MailCreate, MailOut, PageOut, StatusUpdate
+from app.schemas.mail import (
+    AttachmentOut,
+    MailCreate,
+    MailDetailOut,
+    MailOut,
+    MailUpdate,
+    PageOut,
+    StatusHistoryOut,
+    StatusUpdate,
+)
 from app.services.audit import log_action
 from app.services.numbering import allocate_and_insert
 from app.services.queries import build_mail_query
@@ -95,6 +105,50 @@ def update_status(
         )
     )
     log_action(db, actor_id=user.id, action="update_status",
+               entity="mail_record", entity_id=str(rec.id))
+    db.commit()
+    db.refresh(rec)
+    return rec
+
+
+@router.get("/documents/{doc_id}", response_model=MailDetailOut)
+def get_document(
+    doc_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _: AppUser = Depends(get_current_user),
+) -> MailDetailOut:
+    rec = db.get(MailRecord, doc_id)
+    if rec is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Document introuvable")
+    history = db.scalars(
+        select(StatusHistory)
+        .where(StatusHistory.mail_record_id == doc_id)
+        .order_by(StatusHistory.changed_at.desc())
+    ).all()
+    att = db.scalar(select(Attachment).where(Attachment.mail_record_id == doc_id))
+    out = MailDetailOut.model_validate(rec)
+    out.history = [StatusHistoryOut.model_validate(h) for h in history]
+    out.has_pdf = att is not None
+    out.attachment = AttachmentOut.model_validate(att) if att else None
+    return out
+
+
+@router.patch("/documents/{doc_id}", response_model=MailOut)
+def edit_document(
+    doc_id: uuid.UUID,
+    body: MailUpdate,
+    db: Session = Depends(get_db),
+    user: AppUser = Depends(get_current_user),
+) -> MailRecord:
+    rec = db.get(MailRecord, doc_id)
+    if rec is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Document introuvable")
+    data = body.model_dump(exclude_unset=True)
+    for key, value in data.items():
+        setattr(rec, key, value)
+    rec.modified_by = user.id
+    rec.modified_at = datetime.now(timezone.utc)
+    log_action(db, actor_id=user.id, action="edit_document",
                entity="mail_record", entity_id=str(rec.id))
     db.commit()
     db.refresh(rec)
