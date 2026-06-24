@@ -2,7 +2,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import attachments, audit, auth, documents, exports, health, stats, users
+from app.routers import (
+    attachments,
+    audit,
+    auth,
+    documents,
+    exports,
+    health,
+    insights,
+    stats,
+    users,
+)
 
 app = FastAPI(title="WABAG · Bureau d'Ordre API", version=settings.app_version)
 
@@ -22,3 +32,4 @@ app.include_router(exports.router)
 app.include_router(users.router)
 app.include_router(stats.router)
 app.include_router(audit.router)
+app.include_router(insights.router)

@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import exists, func, select
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, get_db
@@ -21,6 +21,7 @@ from app.schemas.mail import (
     StatusUpdate,
 )
 from app.services.audit import log_action
+from app.services.insights import apply_bucket
 from app.services.numbering import allocate_and_insert
 from app.services.queries import build_mail_query
 
@@ -67,6 +68,8 @@ def consultation(
     type_document: str | None = None,
     statut: str | None = None,
     projet: str | None = None,
+    bucket: str | None = None,
+    overdue_days: int = Query(7, ge=1, le=365),
     page: int = Query(1, ge=1),
     page_size: int = Query(25, ge=1, le=200),
     db: Session = Depends(get_db),
@@ -74,11 +77,21 @@ def consultation(
 ) -> PageOut:
     code = _reg_code(register)
     stmt = build_mail_query(code, q=q, type_document=type_document, statut=statut, projet=projet)
+    stmt = apply_bucket(stmt, bucket, overdue_days)
     total = db.scalar(select(func.count()).select_from(stmt.subquery()))
-    rows = db.scalars(
-        stmt.order_by(MailRecord.seq.desc()).offset((page - 1) * page_size).limit(page_size)
+    has_pdf_expr = exists().where(Attachment.mail_record_id == MailRecord.id)
+    rows = db.execute(
+        stmt.add_columns(has_pdf_expr)
+        .order_by(MailRecord.seq.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
     ).all()
-    return PageOut(items=list(rows), total=total or 0, page=page, page_size=page_size)
+    items = []
+    for rec, has_pdf in rows:
+        out = MailOut.model_validate(rec)
+        out.has_pdf = bool(has_pdf)
+        items.append(out)
+    return PageOut(items=items, total=total or 0, page=page, page_size=page_size)
 
 
 @router.patch("/documents/{doc_id}/status", response_model=MailOut)

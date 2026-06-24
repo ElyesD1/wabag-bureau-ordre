@@ -35,6 +35,7 @@ class MailOut(BaseModel):
     date_remise_destinataire: Optional[date]
     dernier_statut: Optional[str]
     created_at: datetime
+    has_pdf: bool = False
 
     model_config = {"from_attributes": True}
 
