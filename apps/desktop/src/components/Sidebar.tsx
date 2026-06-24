@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../store/auth";
-import { IconGear, IconGrid, IconIn, IconOut, IconUsers } from "./Icons";
+import { IconActivity, IconGear, IconGrid, IconIn, IconOut, IconUsers } from "./Icons";
 import { Sillage } from "./Sillage";
 
 function useCount(register: string) {
@@ -56,6 +56,11 @@ export function Sidebar() {
         {user?.role === "admin" && (
           <NavLink to="/utilisateurs" className={({ isActive }) => "nav__item" + (isActive ? " active" : "")}>
             <IconUsers className="nav__ic" /> {t("nav.users")}
+          </NavLink>
+        )}
+        {user?.role === "admin" && (
+          <NavLink to="/journal-activite" className={({ isActive }) => "nav__item" + (isActive ? " active" : "")}>
+            <IconActivity className="nav__ic" /> {t("audit.title")}
           </NavLink>
         )}
         <NavLink to="/parametres" className={({ isActive }) => "nav__item" + (isActive ? " active" : "")}>

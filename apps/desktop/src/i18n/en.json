@@ -142,6 +142,38 @@
     "createdOn": "Created on",
     "saved": "Document updated"
   },
+  "audit": {
+    "title": "Activity log",
+    "subtitle": "Action traceability",
+    "export": "Export Excel",
+    "filterAction": "Action · all",
+    "filterUser": "User · all",
+    "from": "From",
+    "to": "To",
+    "reset": "Reset",
+    "colWhen": "Date / time",
+    "colWho": "User",
+    "colAction": "Action",
+    "colTarget": "Target",
+    "colIp": "IP",
+    "showing": "Showing {{from}}–{{to}} of {{total}} events",
+    "empty": "No events recorded",
+    "system": "System",
+    "actions": {
+      "login": "Login",
+      "create_record": "Document created",
+      "update_status": "Status changed",
+      "edit_document": "Document edited",
+      "upload_pdf": "PDF attached",
+      "export_xlsx": "Excel export",
+      "report_data": "Report generated",
+      "create_user": "User created",
+      "update_user": "User updated",
+      "reset_password": "Password reset",
+      "delete_user": "User deleted",
+      "self_password_change": "Password changed"
+    }
+  },
   "settings": {
     "title": "Settings",
     "subtitle": "Preferences and account",

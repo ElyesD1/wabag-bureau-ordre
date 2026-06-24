@@ -50,6 +50,25 @@ export interface MailDetail extends MailRecord {
   attachment: { original_filename: string | null; byte_size: number; uploaded_at: string } | null;
 }
 
+export interface AuditEntry {
+  id: number;
+  at: string;
+  action: string;
+  entity: string | null;
+  entity_id: string | null;
+  ip: string | null;
+  actor_username: string | null;
+  actor_full_name: string | null;
+  detail: Record<string, unknown> | null;
+}
+
+export interface AuditPage {
+  items: AuditEntry[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
 export interface DashboardStats {
   year: number;
   totals: { entree: number; sortie: number; total: number };

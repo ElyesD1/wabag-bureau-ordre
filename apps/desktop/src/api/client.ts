@@ -100,4 +100,12 @@ export const api = {
       req(`/users/${id}/password`, { method: "POST", json: { password } }),
     remove: (id: string) => req(`/users/${id}`, { method: "DELETE", raw: true }),
   },
+  audit: {
+    list: (params: Record<string, string | number | undefined>) => req(`/audit${qs(params)}`),
+    actions: (): Promise<string[]> => req("/audit/actions"),
+    exportXlsx: async (params: Record<string, string | undefined>): Promise<Blob> => {
+      const res: Response = await req(`/audit/export.xlsx${qs(params)}`, { raw: true });
+      return res.blob();
+    },
+  },
 };

@@ -299,6 +299,11 @@ a { color: inherit; text-decoration: none; }
 .badge.clerk { background: var(--wabag-paper); color: #51606e; }
 .badge.on { background: var(--ok-bg); color: #137a59; }
 .badge.off { background: var(--danger-bg); color: #99291d; }
+.badge.green { background: var(--ok-bg); color: #137a59; }
+.badge.blue { background: rgba(7,80,149,.10); color: var(--wabag-blue); }
+.badge.amber { background: var(--warn-bg); color: #9c6314; }
+.badge.red { background: var(--danger-bg); color: #99291d; }
+.badge.gray { background: var(--wabag-paper); color: #51606e; }
 .uactions { display: flex; gap: 12px; justify-content: flex-end; align-items: center; }
 .mono-row { font-family: var(--font-mono); font-size: 12px; color: #51606e; }
 .modal__card.wide { width: 460px; }

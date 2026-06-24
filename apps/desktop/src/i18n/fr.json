@@ -142,6 +142,38 @@
     "createdOn": "Créé le",
     "saved": "Document mis à jour"
   },
+  "audit": {
+    "title": "Journal d'activité",
+    "subtitle": "Traçabilité des actions",
+    "export": "Exporter Excel",
+    "filterAction": "Action · toutes",
+    "filterUser": "Utilisateur · tous",
+    "from": "Du",
+    "to": "Au",
+    "reset": "Réinitialiser",
+    "colWhen": "Date / heure",
+    "colWho": "Utilisateur",
+    "colAction": "Action",
+    "colTarget": "Cible",
+    "colIp": "IP",
+    "showing": "Affichage {{from}}–{{to}} sur {{total}} événements",
+    "empty": "Aucun événement enregistré",
+    "system": "Système",
+    "actions": {
+      "login": "Connexion",
+      "create_record": "Création document",
+      "update_status": "Changement statut",
+      "edit_document": "Modification document",
+      "upload_pdf": "Ajout PDF",
+      "export_xlsx": "Export Excel",
+      "report_data": "Génération rapport",
+      "create_user": "Création utilisateur",
+      "update_user": "Modification utilisateur",
+      "reset_password": "Réinit. mot de passe",
+      "delete_user": "Suppression utilisateur",
+      "self_password_change": "Changement mot de passe"
+    }
+  },
   "settings": {
     "title": "Paramètres",
     "subtitle": "Préférences et compte",

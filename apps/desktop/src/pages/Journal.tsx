@@ -157,9 +157,19 @@ export function Journal() {
           <option>Annulé</option>
         </select>
         <span className="spacer" />
-        <button className="muted-link" onClick={() => setSp(new URLSearchParams(), { replace: true })}>
-          {t("filters.reset")}
-        </button>
+        {(() => {
+          const hasFilters = !!(q || typeF || statutF || sp.get("page"));
+          return (
+            <button
+              className="muted-link"
+              onClick={() => setSp(new URLSearchParams(), { replace: true })}
+              disabled={!hasFilters}
+              style={hasFilters ? undefined : { opacity: 0.4, cursor: "default" }}
+            >
+              {t("filters.reset")}
+            </button>
+          );
+        })()}
       </div>
 
       <div className="panel">

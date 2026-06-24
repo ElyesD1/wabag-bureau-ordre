@@ -58,3 +58,6 @@ export const IconTrash = (p: SVGProps<SVGSVGElement>) => (
 export const IconKey = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base(p)}><circle cx="8" cy="15" r="4" /><path d="M10.8 12.2 20 3" /><path d="M16 7l3 3" /><path d="M14 9l3 3" /></svg>
 );
+export const IconActivity = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}><path d="M3 12h4l2 7 4-14 2 7h6" /></svg>
+);

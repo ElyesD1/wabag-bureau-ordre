@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
+import { Audit } from "./pages/Audit";
 import { Dashboard } from "./pages/Dashboard";
 import { Journal } from "./pages/Journal";
 import { Login } from "./pages/Login";
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/tableau" replace />} />
         <Route path="/tableau" element={<Dashboard />} />
         <Route path="/utilisateurs" element={<Users />} />
+        <Route path="/journal-activite" element={<Audit />} />
         <Route path="/parametres" element={<Settings />} />
         <Route path="/:register" element={<Journal />} />
       </Route>
