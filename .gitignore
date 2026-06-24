@@ -26,3 +26,7 @@ Thumbs.db
 pdfs/
 certs/*.key
 certs/*.pem
+
+# Dev/design artifacts
+**/shots/
+.playwright-mcp/
