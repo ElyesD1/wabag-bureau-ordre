@@ -1,0 +1,85 @@
+{
+  "app": { "menu": "Bureau d'Ordre" },
+  "login": {
+    "eyebrow": "Bureau d'Ordre",
+    "title": "Bienvenue",
+    "subtitle": "Registre du courrier — VA Tech WABAG Tunisie",
+    "user": "Identifiant",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "error": "Identifiant ou mot de passe incorrect"
+  },
+  "nav": {
+    "navigation": "Navigation",
+    "dashboard": "Tableau de bord",
+    "registers": "Registres",
+    "entree": "Bureau d'Ordre Entrée",
+    "sortie": "Bureau d'Ordre Sortie",
+    "admin": "Administration",
+    "users": "Utilisateurs",
+    "settings": "Paramètres",
+    "logout": "Se déconnecter"
+  },
+  "journal": {
+    "titleE": "Journal — Bureau d'Ordre Entrée",
+    "titleS": "Journal — Bureau d'Ordre Sortie",
+    "registered": "documents enregistrés · année {{year}}",
+    "export": "Exporter Excel",
+    "new": "Saisir un document",
+    "search": "Rechercher un N° d'ordre, objet, expéditeur…",
+    "showing": "Affichage {{from}}–{{to}} sur {{total}} documents",
+    "empty": "Aucun document dans ce registre",
+    "emptyHint": "Cliquez sur « Saisir un document » pour commencer le journal."
+  },
+  "cols": {
+    "no": "N° d'ordre", "date": "Date", "type": "Type", "objet": "Objet",
+    "expediteur": "Expéditeur", "projet": "Projet", "statut": "Statut"
+  },
+  "filters": {
+    "entree": "Entrée", "sortie": "Sortie",
+    "type": "Type · tous", "statut": "Statut · tous", "reset": "Réinitialiser"
+  },
+  "saisie": {
+    "kicker": "Bureau d'Ordre · {{reg}}",
+    "title": "Saisir un document",
+    "autoNo": "N° d'ordre · auto",
+    "autoDate": "Date · auto",
+    "type": "Type de document",
+    "reference": "Référence",
+    "objet": "Objet",
+    "objetPh": "Objet / sujet du document",
+    "expediteur": "Expéditeur",
+    "projet": "Projet",
+    "destinataire": "Destinataire",
+    "dateRemise": "Date remise destinataire",
+    "statutInitial": "Statut initial",
+    "pdf": "Joindre la copie PDF",
+    "pdfHint": "Cliquez pour choisir le document scanné · PDF, 20 Mo max",
+    "cancel": "Annuler",
+    "save": "Enregistrer le document",
+    "required": "Champ obligatoire"
+  },
+  "modal": {
+    "statusTitle": "Modifier le statut",
+    "statusSub": "Document {{no}}",
+    "newStatus": "Nouveau statut",
+    "note": "Note (facultatif)",
+    "cancel": "Annuler",
+    "confirm": "Enregistrer"
+  },
+  "status": {
+    "encours": "En cours", "enattente": "En attente", "clos": "Clos", "annule": "Annulé"
+  },
+  "types": {
+    "facture": "Facture", "lettre": "Lettre", "fax": "Fax",
+    "bl": "Bon de Livraison", "dossier": "Dossier", "autre": "Autre"
+  },
+  "toast": {
+    "created": "Document {{no}} enregistré",
+    "statusUpdated": "Statut mis à jour",
+    "exported": "Export Excel téléchargé",
+    "pdfUploaded": "PDF joint au document",
+    "error": "Une erreur est survenue"
+  },
+  "common": { "loading": "Chargement…", "auto": "auto" }
+}

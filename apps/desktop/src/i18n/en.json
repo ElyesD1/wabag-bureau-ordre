@@ -1,0 +1,85 @@
+{
+  "app": { "menu": "Mail Registry" },
+  "login": {
+    "eyebrow": "Mail Registry",
+    "title": "Welcome",
+    "subtitle": "Correspondence registry — VA Tech WABAG Tunisia",
+    "user": "Username",
+    "password": "Password",
+    "submit": "Sign in",
+    "error": "Incorrect username or password"
+  },
+  "nav": {
+    "navigation": "Navigation",
+    "dashboard": "Dashboard",
+    "registers": "Registers",
+    "entree": "Incoming Mail",
+    "sortie": "Outgoing Mail",
+    "admin": "Administration",
+    "users": "Users",
+    "settings": "Settings",
+    "logout": "Sign out"
+  },
+  "journal": {
+    "titleE": "Journal — Incoming Mail",
+    "titleS": "Journal — Outgoing Mail",
+    "registered": "documents registered · year {{year}}",
+    "export": "Export Excel",
+    "new": "Register a document",
+    "search": "Search an order no., subject, sender…",
+    "showing": "Showing {{from}}–{{to}} of {{total}} documents",
+    "empty": "No documents in this register",
+    "emptyHint": "Click “Register a document” to start the journal."
+  },
+  "cols": {
+    "no": "Order No.", "date": "Date", "type": "Type", "objet": "Subject",
+    "expediteur": "Sender", "projet": "Project", "statut": "Status"
+  },
+  "filters": {
+    "entree": "Incoming", "sortie": "Outgoing",
+    "type": "Type · all", "statut": "Status · all", "reset": "Reset"
+  },
+  "saisie": {
+    "kicker": "Mail Registry · {{reg}}",
+    "title": "Register a document",
+    "autoNo": "Order No. · auto",
+    "autoDate": "Date · auto",
+    "type": "Document type",
+    "reference": "Reference",
+    "objet": "Subject",
+    "objetPh": "Subject of the document",
+    "expediteur": "Sender",
+    "projet": "Project",
+    "destinataire": "Recipient",
+    "dateRemise": "Delivery date",
+    "statutInitial": "Initial status",
+    "pdf": "Attach the PDF copy",
+    "pdfHint": "Click to choose the scanned document · PDF, 20 MB max",
+    "cancel": "Cancel",
+    "save": "Save document",
+    "required": "Required field"
+  },
+  "modal": {
+    "statusTitle": "Change status",
+    "statusSub": "Document {{no}}",
+    "newStatus": "New status",
+    "note": "Note (optional)",
+    "cancel": "Cancel",
+    "confirm": "Save"
+  },
+  "status": {
+    "encours": "In progress", "enattente": "Pending", "clos": "Closed", "annule": "Cancelled"
+  },
+  "types": {
+    "facture": "Invoice", "lettre": "Letter", "fax": "Fax",
+    "bl": "Delivery note", "dossier": "File", "autre": "Other"
+  },
+  "toast": {
+    "created": "Document {{no}} registered",
+    "statusUpdated": "Status updated",
+    "exported": "Excel export downloaded",
+    "pdfUploaded": "PDF attached to the document",
+    "error": "Something went wrong"
+  },
+  "common": { "loading": "Loading…", "auto": "auto" }
+}
