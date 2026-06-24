@@ -1,8 +1,11 @@
-const BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:8099";
+let BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:8099";
 
 let token: string | null = null;
 export function setApiToken(t: string | null) {
   token = t;
+}
+export function setApiBase(url: string) {
+  BASE = url;
 }
 export function apiBase() {
   return BASE;

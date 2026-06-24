@@ -174,6 +174,28 @@
       "self_password_change": "Password changed"
     }
   },
+  "net": {
+    "title": "Bureau d'Ordre network",
+    "setupTitle": "Set up the network",
+    "setupHint": "First time here — choose how this PC connects.",
+    "host": "Host on this PC",
+    "hostHint": "Make this computer the office server. The other PCs will connect to it automatically.",
+    "join": "Join a server",
+    "joinHint": "Connect to the office server already running on the network.",
+    "scanning": "Looking for servers on the network…",
+    "noServers": "No server found yet.",
+    "joinBtn": "Join",
+    "connected": "Connected to the office server",
+    "hosting": "This PC hosts the server",
+    "change": "Switch server",
+    "back": "Back",
+    "statusConnected": "Connected",
+    "statusHosting": "Hosting",
+    "statusSetup": "Set up",
+    "confirmHost": "Host on this PC?",
+    "confirmHostMsg": "This computer will become the office server and start automatically on every boot. The database will be kept here permanently.",
+    "autoNote": "Once set up, everything is automatic — you won't have to do this again."
+  },
   "suivi": {
     "tab": "Monitoring",
     "journalTab": "Journal",

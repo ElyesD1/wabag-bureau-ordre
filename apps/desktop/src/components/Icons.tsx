@@ -70,3 +70,12 @@ export const IconClock = (p: SVGProps<SVGSVGElement>) => (
 export const IconGauge = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base(p)}><path d="M12 13l4-4" /><path d="M3.5 17a9 9 0 1 1 17 0" /><circle cx="12" cy="13" r="1.4" /></svg>
 );
+export const IconServer = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}><rect x="3" y="4" width="18" height="7" rx="2" /><rect x="3" y="13" width="18" height="7" rx="2" /><path d="M7 7.5h.01M7 16.5h.01" /></svg>
+);
+export const IconWifi = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}><path d="M5 12.5a10 10 0 0 1 14 0" /><path d="M8.5 16a5 5 0 0 1 7 0" /><path d="M12 19.5h.01" /></svg>
+);
+export const IconCheck = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)} strokeWidth={2.2}><path d="M20 6 9 17l-5-5" /></svg>
+);
