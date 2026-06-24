@@ -321,6 +321,43 @@ a { color: inherit; text-decoration: none; }
 .hist .ht { font-size: 13px; display: flex; align-items: center; gap: 6px; }
 .hist .hd { font-family: var(--font-mono); font-size: 11px; color: var(--wabag-gray); margin-top: 3px; }
 
+/* ---------------- SUIVI (monitoring) ---------------- */
+.viewtab { display: flex; background: #fff; border: 1.5px solid var(--wabag-line); border-radius: var(--r-md); padding: 3px; }
+.viewtab button { border: none; background: none; padding: 7px 16px; border-radius: 7px; font-weight: 600; font-size: 13px;
+  color: var(--wabag-gray); display: inline-flex; align-items: center; gap: 7px; }
+.viewtab button.active { background: var(--wabag-blue); color: #fff; }
+.alert-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+.alert { background: #fff; border: 1px solid var(--wabag-line); border-radius: var(--r-lg); box-shadow: var(--shadow-sm);
+  padding: 16px 18px; text-align: left; cursor: pointer; transition: border-color .14s, transform .1s; }
+.alert:hover { border-color: #c9d6e3; transform: translateY(-1px); }
+.alert.flat { cursor: default; } .alert.flat:hover { transform: none; border-color: var(--wabag-line); }
+.alert__ic { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; margin-bottom: 10px; }
+.alert__val { font-family: var(--font-display); font-weight: 700; font-size: 28px; letter-spacing: -.02em; line-height: 1; }
+.alert__label { font-size: 12.5px; color: var(--wabag-gray); font-weight: 600; margin-top: 6px; }
+.alert.danger .alert__ic { background: var(--danger-bg); color: var(--danger); } .alert.danger .alert__val { color: var(--danger); }
+.alert.warn .alert__ic { background: var(--warn-bg); color: #9c6314; } .alert.warn .alert__val { color: #9c6314; }
+.alert.ok .alert__ic { background: var(--ok-bg); color: var(--ok); } .alert.ok .alert__val { color: var(--ok); }
+.alert.info .alert__ic { background: rgba(47,164,219,.14); color: var(--wabag-blue); } .alert.info .alert__val { color: var(--wabag-blue); }
+.aging-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.aging { border: 1px solid var(--wabag-line); border-radius: var(--r-md); padding: 13px 14px; text-align: center; }
+.aging__val { font-family: var(--font-display); font-weight: 700; font-size: 22px; color: var(--wabag-ink); }
+.aging__lbl { font-family: var(--font-mono); font-size: 11px; color: var(--wabag-gray); margin-top: 3px; }
+.aging.hot .aging__val { color: var(--danger); }
+.watch-row { display: flex; align-items: center; gap: 12px; padding: 11px 6px; border-bottom: 1px solid #eef3f8; cursor: pointer; border-radius: 8px; }
+.watch-row:last-child { border-bottom: none; } .watch-row:hover { background: #f6fafd; }
+.watch-row .wo { flex: 1; min-width: 0; } .watch-row .wo b { font-size: 13px; font-weight: 500; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.watch-row .wo small { font-size: 11.5px; color: var(--wabag-gray); }
+.flags { display: inline-flex; gap: 6px; margin-left: 8px; vertical-align: middle; }
+.flag { font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.flag.age { background: var(--wabag-paper); color: #51606e; font-family: var(--font-mono); font-weight: 600; }
+.flag.late { background: var(--danger-bg); color: #99291d; }
+.flag.nopdf { background: var(--warn-bg); color: #9c6314; }
+.bucket-chip { display: inline-flex; align-items: center; gap: 7px; background: rgba(7,80,149,.10); color: var(--wabag-blue);
+  border: 1px solid #d6e6f3; border-radius: 20px; padding: 5px 8px 5px 13px; font-size: 12.5px; font-weight: 600; }
+.bucket-chip button { border: none; background: none; color: inherit; display: inline-grid; place-items: center; cursor: pointer; opacity: .65; padding: 0; }
+.bucket-chip button:hover { opacity: 1; }
+@media (max-width: 1080px) { .alert-grid, .aging-grid { grid-template-columns: repeat(2, 1fr); } }
+
 @media (prefers-reduced-motion: reduce) { .login__pulse, .login__echo-pulse, .drawer, .toast { animation: none; } }
 @media (max-width: 1080px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 880px) { .app { grid-template-columns: 1fr; } .side { display: none; } }

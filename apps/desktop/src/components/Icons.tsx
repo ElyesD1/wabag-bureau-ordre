@@ -61,3 +61,12 @@ export const IconKey = (p: SVGProps<SVGSVGElement>) => (
 export const IconActivity = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base(p)}><path d="M3 12h4l2 7 4-14 2 7h6" /></svg>
 );
+export const IconAlert = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}><path d="M10.3 4.3 2.5 18a1.5 1.5 0 0 0 1.3 2.2h16.4A1.5 1.5 0 0 0 21.5 18L13.7 4.3a1.6 1.6 0 0 0-2.8 0Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+);
+export const IconClock = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+);
+export const IconGauge = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}><path d="M12 13l4-4" /><path d="M3.5 17a9 9 0 1 1 17 0" /><circle cx="12" cy="13" r="1.4" /></svg>
+);

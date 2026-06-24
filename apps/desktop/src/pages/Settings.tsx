@@ -4,6 +4,7 @@ import { ApiError, api, apiBase } from "../api/client";
 import { IconGear } from "../components/Icons";
 import { useToast } from "../components/Toast";
 import i18n from "../i18n";
+import { getOverdueDays, setOverdueDays } from "../lib/prefs";
 import { useAuth } from "../store/auth";
 
 export function Settings() {
@@ -15,6 +16,7 @@ export function Settings() {
   const [nw, setNw] = useState("");
   const [cf, setCf] = useState("");
   const [busy, setBusy] = useState(false);
+  const [overdue, setOverdue] = useState(getOverdueDays());
 
   function setLang(l: "fr" | "en") {
     i18n.changeLanguage(l);
@@ -82,6 +84,27 @@ export function Settings() {
               <button className={lang === "fr" ? "active" : ""} onClick={() => setLang("fr")}>FR</button>
               <button className={lang === "en" ? "active" : ""} onClick={() => setLang("en")}>EN</button>
             </div>
+          </div>
+          <div className="card" style={{ marginBottom: 16 }}>
+            <div className="card__title">{t("settings.monitoring")}</div>
+            <label className="form-label">{t("settings.overdueThreshold")}</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                max={365}
+                value={overdue}
+                style={{ width: 100 }}
+                onChange={(e) => {
+                  const n = Number(e.target.value) || 7;
+                  setOverdue(n);
+                  setOverdueDays(n);
+                }}
+              />
+              <span style={{ color: "var(--wabag-gray)", fontSize: 13 }}>{t("settings.overdueUnit")}</span>
+            </div>
+            <p style={{ color: "var(--wabag-gray)", fontSize: 12, margin: "10px 0 0" }}>{t("settings.overdueHint")}</p>
           </div>
           <div className="card" style={{ marginBottom: 16 }}>
             <div className="card__title">{t("settings.server")}</div>

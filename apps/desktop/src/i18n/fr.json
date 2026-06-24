@@ -174,6 +174,26 @@
       "self_password_change": "Changement mot de passe"
     }
   },
+  "suivi": {
+    "tab": "Suivi",
+    "journalTab": "Journal",
+    "subtitle": "Observabilité du registre · {{year}}",
+    "open": "À traiter",
+    "overdue": "En retard",
+    "noPdf": "Sans copie PDF",
+    "closed": "Clôturés",
+    "avgProc": "Délai moyen de traitement",
+    "days": "j",
+    "statusDist": "Répartition par statut",
+    "aging": "Ancienneté des documents ouverts",
+    "backlog": "Backlog par projet",
+    "watch": "À surveiller",
+    "watchHint": "Documents ouverts, du plus ancien",
+    "noWatch": "Rien à signaler — le registre est à jour.",
+    "late": "en retard",
+    "missingPdf": "sans PDF",
+    "filterLabel": "Filtre"
+  },
   "settings": {
     "title": "Paramètres",
     "subtitle": "Préférences et compte",
@@ -189,7 +209,12 @@
     "passwordMismatch": "Les mots de passe ne correspondent pas",
     "server": "Connexion serveur",
     "serverHint": "Adresse de l'API du Bureau d'Ordre.",
-    "version": "Version"
+    "version": "Version",
+    "monitoring": "Suivi & alertes",
+    "overdueThreshold": "Seuil de retard",
+    "overdueHint": "Un document ouvert depuis plus de N jours est signalé « en retard ».",
+    "overdueUnit": "jours",
+    "save": "Enregistrer"
   },
   "common": { "loading": "Chargement…", "auto": "auto", "close": "Fermer" }
 }

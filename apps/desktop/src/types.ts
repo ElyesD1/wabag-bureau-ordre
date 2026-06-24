@@ -14,6 +14,39 @@ export interface MailRecord {
   date_remise_destinataire: string | null;
   dernier_statut: string | null;
   created_at: string;
+  has_pdf?: boolean;
+}
+
+export interface WatchItem {
+  id: string;
+  no_ordre: string;
+  objet: string | null;
+  expediteur: string | null;
+  dernier_statut: string | null;
+  date_enregistrement: string;
+  age_days: number;
+  overdue: boolean;
+  has_pdf: boolean;
+}
+
+export interface RegisterInsights {
+  register: string;
+  year: number;
+  overdue_days: number;
+  total: number;
+  open: number;
+  pending: number;
+  closed: number;
+  cancelled: number;
+  overdue: number;
+  no_pdf: number;
+  no_pdf_open: number;
+  this_month: number;
+  avg_processing_days: number | null;
+  by_status: { status: string; count: number }[];
+  aging: { bucket: string; count: number }[];
+  by_projet: { projet: string; count: number }[];
+  watch: WatchItem[];
 }
 
 export interface PageResult {

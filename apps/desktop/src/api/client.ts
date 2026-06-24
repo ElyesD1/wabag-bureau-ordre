@@ -84,6 +84,8 @@ export const api = {
     return res.blob();
   },
   stats: (year?: number) => req(`/stats/dashboard${year ? `?year=${year}` : ""}`),
+  insights: (register: string, overdueDays: number, year?: number) =>
+    req(`/registers/${register}/insights${qs({ overdue_days: overdueDays, year })}`),
   setLocale: (locale: string) =>
     req("/users/me/locale", { method: "PATCH", json: { preferred_locale: locale } }),
   changePassword: (currentPassword: string, newPassword: string) =>
