@@ -38,8 +38,6 @@ jobs:
       - run: npm ci
       - name: Build installers
         run: ${{ matrix.pkg }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload installers as artifacts
         uses: actions/upload-artifact@v4
         with:
