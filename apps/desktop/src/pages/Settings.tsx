@@ -115,7 +115,14 @@ export function Settings() {
             <img src="./wabag-logo.png" alt="WABAG" style={{ height: 30, margin: "6px auto 14px", display: "block" }} />
             <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 15 }}>Bureau d'Ordre</div>
             <div className="mono-row" style={{ marginTop: 4 }}>{t("settings.version")} 1.0.0</div>
-            <div style={{ fontSize: 11.5, color: "var(--wabag-gray)", marginTop: 8, fontStyle: "italic" }}>
+            <button
+              className="btn"
+              style={{ margin: "14px auto 0" }}
+              onClick={() => window.open("./guide.html", "_blank")}
+            >
+              {t("settings.guide")}
+            </button>
+            <div style={{ fontSize: 11.5, color: "var(--wabag-gray)", marginTop: 12, fontStyle: "italic" }}>
               sustainable solutions. for a better life.
             </div>
           </div>

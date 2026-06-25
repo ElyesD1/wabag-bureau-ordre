@@ -28,3 +28,4 @@ def ensure_indexes(database: Database | None = None) -> None:
     d.status_history.create_index([("mail_id", ASCENDING)])
     d.audit_log.create_index([("at", ASCENDING)])
     d.attachments.create_index([("mail_id", ASCENDING)], unique=True)
+    d.assistant_messages.create_index([("user_id", ASCENDING), ("at", ASCENDING)])

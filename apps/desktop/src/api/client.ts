@@ -113,4 +113,9 @@ export const api = {
       return res.blob();
     },
   },
+  assistant: {
+    history: () => req("/assistant/history"),
+    log: (user_text: string, bot_text: string, intent?: string) =>
+      req("/assistant/log", { method: "POST", json: { user_text, bot_text, intent }, raw: true }),
+  },
 };

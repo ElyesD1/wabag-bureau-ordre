@@ -8,6 +8,7 @@ from app.core.config import settings
 from app.core.security import hash_password
 from app.db.mongo import db, ensure_indexes
 from app.routers import (
+    assistant,
     attachments,
     audit,
     auth,
@@ -55,5 +56,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for module in (health, auth, documents, attachments, exports, users, stats, audit, insights):
+for module in (health, auth, documents, attachments, exports, users, stats, audit, insights, assistant):
     app.include_router(module.router)
