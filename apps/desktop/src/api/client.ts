@@ -1,4 +1,9 @@
-let BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:8099";
+// In the packaged app the embedded local server URL is injected by Electron
+// (preload → window.api.serverUrl). In the browser/dev, fall back to env/local.
+let BASE =
+  (typeof window !== "undefined" && (window as { api?: { serverUrl?: string } }).api?.serverUrl) ||
+  (import.meta.env.VITE_API_URL as string) ||
+  "http://localhost:8099";
 
 let token: string | null = null;
 export function setApiToken(t: string | null) {
