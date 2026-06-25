@@ -21,11 +21,6 @@ release/
 !apps/desktop/build/
 !apps/desktop/build/**
 
-# Embedded server: PyInstaller output + the secret Atlas config (never commit)
-apps/server/pyi-dist/
-apps/server/pyi-build/
-apps/desktop/resources/server-config.json
-
 # OS
 .DS_Store
 Thumbs.db

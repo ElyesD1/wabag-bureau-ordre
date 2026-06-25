@@ -14,14 +14,6 @@ files:
 extraMetadata:
   main: electron/main.cjs
 
-# The embedded FastAPI server (PyInstaller bundle) + its Atlas config travel
-# alongside the app and are spawned at launch on a private 127.0.0.1 port.
-extraResources:
-  - from: ../server/pyi-dist/bo-server
-    to: bo-server
-  - from: resources/server-config.json
-    to: server-config.json
-
 win:
   target:
     - nsis

@@ -1,6 +1,6 @@
 {
   "name": "wabag-bureau-ordre",
-  "version": "1.0.2",
+  "version": "1.0.1",
   "description": "WABAG Bureau d'Ordre — desktop client",
   "author": "VA Tech WABAG Tunisie",
   "license": "UNLICENSED",
@@ -12,9 +12,8 @@
     "dev": "concurrently -k \"vite\" \"wait-on tcp:127.0.0.1:5173 && cross-env ELECTRON_DEV=1 electron electron/main.cjs\"",
     "build": "vite build",
     "preview": "vite preview --port 4173",
-    "gen-config": "node scripts/gen-server-config.mjs",
-    "package:win": "npm run build && npm run gen-config && electron-builder --win --publish never",
-    "package:mac": "npm run build && npm run gen-config && electron-builder --mac --publish never"
+    "package:win": "npm run build && electron-builder --win --publish never",
+    "package:mac": "npm run build && electron-builder --mac --publish never"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

@@ -114,7 +114,7 @@ export function Settings() {
           <div className="card" style={{ textAlign: "center" }}>
             <img src="./wabag-logo.png" alt="WABAG" style={{ height: 30, margin: "6px auto 14px", display: "block" }} />
             <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 15 }}>Bureau d'Ordre</div>
-            <div className="mono-row" style={{ marginTop: 4 }}>{t("settings.version")} 1.0.2</div>
+            <div className="mono-row" style={{ marginTop: 4 }}>{t("settings.version")} 1.0.1</div>
             <button
               className="btn"
               style={{ margin: "14px auto 0" }}
