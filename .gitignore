@@ -17,6 +17,9 @@ release/
 *.exe
 *.msi
 *.dmg
+# …but keep the electron-builder resources (app icon) needed by CI
+!apps/desktop/build/
+!apps/desktop/build/**
 
 # OS
 .DS_Store

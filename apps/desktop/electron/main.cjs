@@ -20,6 +20,9 @@ function createWindow() {
     },
   });
   win.once("ready-to-show", () => win.show());
+  // Allow the in-app guide (guide.html) and the PDF viewer (blob URLs) to open
+  // in their own window instead of being blocked.
+  win.webContents.setWindowOpenHandler(() => ({ action: "allow" }));
   if (isDev) {
     win.loadURL("http://localhost:5173");
   } else {

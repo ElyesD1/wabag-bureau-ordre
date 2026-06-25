@@ -1,0 +1,42 @@
+appId: com.wabag.bureauordre
+productName: "WABAG Bureau d'Ordre"
+copyright: © VA Tech WABAG Tunisie
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+
+extraMetadata:
+  main: electron/main.cjs
+
+win:
+  target:
+    - nsis
+    - msi
+  icon: build/icon.png
+  artifactName: WABAG-BureauOrdre-Setup-${version}.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: "Bureau d'Ordre WABAG"
+  installerLanguages:
+    - fr_FR
+    - en_US
+
+mac:
+  target: dmg
+  icon: build/icon.png
+  category: public.app-category.business
+  artifactName: WABAG-BureauOrdre-${version}.${ext}
+
+dmg:
+  title: "WABAG Bureau d'Ordre"
