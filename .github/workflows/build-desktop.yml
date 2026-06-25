@@ -56,3 +56,30 @@ jobs:
             apps/desktop/release/*.msi
             apps/desktop/release/*.dmg
           fail_on_unmatched_files: false
+
+  # Renders the bundled guide (public/guide.html) to a branded PDF and ships it
+  # on the Release next to the installers.
+  guide-pdf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Render guide → PDF (Playwright/Chromium)
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm i playwright@1.48.0 >/dev/null 2>&1
+          npx playwright install --with-deps chromium
+          node apps/desktop/scripts/guide-to-pdf.mjs
+      - name: Upload guide PDF as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: guide-pdf
+          path: WABAG-BureauOrdre-Guide.pdf
+      - name: Attach to GitHub Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: WABAG-BureauOrdre-Guide.pdf
+          fail_on_unmatched_files: false
