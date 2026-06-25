@@ -6,7 +6,7 @@ The desktop client just points at the public Render URL — no local server, no 
 ## 1. MongoDB Atlas (database — already provisioned)
 
 - Cluster: `cluster0` (free M0 tier).
-- DB user: `elyesdarouich_db_user` · Network access: `0.0.0.0/0` (open — required so Render can reach it).
+- DB user: `<your-atlas-user>` · Network access: `0.0.0.0/0` (open — required so Render can reach it).
 - App database name: `bureau_ordre` (tests use `bureau_ordre_test`).
 - PDFs are stored in **GridFS** inside the same database (Render's disk is ephemeral, so files can't live on the server).
 
@@ -17,7 +17,7 @@ The desktop client just points at the public Render URL — no local server, no 
 1. Push this repo to GitHub (done: `ElyesD1/wabag-bureau-ordre`).
 2. Render → **New ▸ Blueprint** → connect the repo. Render reads [`render.yaml`](../render.yaml) and creates the web service.
 3. Set the two **secret** env vars in the dashboard (everything else is auto):
-   - `MONGODB_URI` = `mongodb+srv://USER:PASSWORD@cluster0.vyytik3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
+   - `MONGODB_URI` = `mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
    - `SEED_ADMIN_PASSWORD` = a strong password for the first admin (username defaults to `admin`).
 4. Deploy. On first boot, if the database has no users, the app **auto-creates the admin** from `SEED_ADMIN_USERNAME` / `SEED_ADMIN_PASSWORD`. No manual seeding.
 5. Your API is live at `https://wabag-bureau-ordre-api.onrender.com` (health check: `/health/version`, docs: `/docs`).
