@@ -1,12 +1,12 @@
-"""Create the first admin.
+"""Create the first admin in MongoDB.
 
 Usage: python -m scripts.seed_admin <username> <full_name> <password>
 """
 import sys
+from datetime import datetime, timezone
 
 from app.core.security import hash_password
-from app.db.session import SessionLocal
-from app.models.user import AppUser
+from app.db.mongo import db, ensure_indexes
 
 
 def main() -> None:
@@ -14,20 +14,22 @@ def main() -> None:
         print("usage: python -m scripts.seed_admin <username> <full_name> <password>")
         raise SystemExit(2)
     username, full_name, password = sys.argv[1:4]
-    with SessionLocal() as s:
-        if s.query(AppUser).filter_by(username=username).first():
-            print(f"user '{username}' already exists")
-            return
-        s.add(
-            AppUser(
-                username=username,
-                full_name=full_name,
-                password_hash=hash_password(password),
-                role="admin",
-            )
-        )
-        s.commit()
-        print(f"admin '{username}' created")
+    username = username.lower()
+    ensure_indexes()
+    if db.users.find_one({"username": username}):
+        print(f"user '{username}' already exists")
+        return
+    db.users.insert_one({
+        "username": username,
+        "full_name": full_name,
+        "password_hash": hash_password(password),
+        "role": "admin",
+        "preferred_locale": "fr",
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc),
+        "last_login_at": None,
+    })
+    print(f"admin '{username}' created")
 
 
 if __name__ == "__main__":

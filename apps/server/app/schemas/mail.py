@@ -1,4 +1,3 @@
-import uuid
 from datetime import date, datetime
 from typing import Literal, Optional
 
@@ -21,23 +20,31 @@ class StatusUpdate(BaseModel):
     note: Optional[str] = Field(default=None, max_length=400)
 
 
+class MailUpdate(BaseModel):
+    type_document: Optional[str] = Field(default=None, min_length=1, max_length=64)
+    reference: Optional[str] = Field(default=None, max_length=120)
+    objet: Optional[str] = Field(default=None, max_length=400)
+    expediteur: Optional[str] = Field(default=None, max_length=160)
+    projet: Optional[str] = Field(default=None, max_length=160)
+    destinataire: Optional[str] = Field(default=None, max_length=160)
+    date_remise_destinataire: Optional[date] = None
+
+
 class MailOut(BaseModel):
-    id: uuid.UUID
+    id: str
     register: str
     no_ordre: str
     date_enregistrement: date
     type_document: str
-    reference: Optional[str]
-    objet: Optional[str]
-    expediteur: Optional[str]
-    projet: Optional[str]
-    destinataire: Optional[str]
-    date_remise_destinataire: Optional[date]
-    dernier_statut: Optional[str]
+    reference: Optional[str] = None
+    objet: Optional[str] = None
+    expediteur: Optional[str] = None
+    projet: Optional[str] = None
+    destinataire: Optional[str] = None
+    date_remise_destinataire: Optional[date] = None
+    dernier_statut: Optional[str] = None
     created_at: datetime
     has_pdf: bool = False
-
-    model_config = {"from_attributes": True}
 
 
 class PageOut(BaseModel):
@@ -55,36 +62,21 @@ class ReportOut(BaseModel):
 
 
 class StatusHistoryOut(BaseModel):
-    old_status: Optional[str]
-    new_status: Optional[str]
+    old_status: Optional[str] = None
+    new_status: Optional[str] = None
     changed_at: datetime
-    note: Optional[str]
-
-    model_config = {"from_attributes": True}
+    note: Optional[str] = None
 
 
 class AttachmentOut(BaseModel):
-    original_filename: Optional[str]
+    original_filename: Optional[str] = None
     byte_size: int
     uploaded_at: datetime
-
-    model_config = {"from_attributes": True}
 
 
 class MailDetailOut(MailOut):
     history: list[StatusHistoryOut] = []
-    has_pdf: bool = False
     attachment: Optional[AttachmentOut] = None
-
-
-class MailUpdate(BaseModel):
-    type_document: Optional[str] = Field(default=None, min_length=1, max_length=64)
-    reference: Optional[str] = Field(default=None, max_length=120)
-    objet: Optional[str] = Field(default=None, max_length=400)
-    expediteur: Optional[str] = Field(default=None, max_length=160)
-    projet: Optional[str] = Field(default=None, max_length=160)
-    destinataire: Optional[str] = Field(default=None, max_length=160)
-    date_remise_destinataire: Optional[date] = None
 
 
 Register = Literal["entree", "sortie"]

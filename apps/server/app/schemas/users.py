@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 from typing import Optional
 
@@ -34,13 +33,11 @@ class LocaleUpdate(BaseModel):
 
 
 class UserAdminOut(BaseModel):
-    id: uuid.UUID
+    id: str
     username: str
     full_name: str
     role: str
     preferred_locale: str
     is_active: bool
     created_at: datetime
-    last_login_at: Optional[datetime]
-
-    model_config = {"from_attributes": True}
+    last_login_at: Optional[datetime] = None

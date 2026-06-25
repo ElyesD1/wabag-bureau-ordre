@@ -5,14 +5,14 @@ from pydantic import BaseModel
 
 
 class AuditOut(BaseModel):
-    id: int
+    id: str
     at: datetime
     action: str
-    entity: Optional[str]
-    entity_id: Optional[str]
-    ip: Optional[str]
-    actor_username: Optional[str]
-    actor_full_name: Optional[str]
+    entity: Optional[str] = None
+    entity_id: Optional[str] = None
+    ip: Optional[str] = None
+    actor_username: Optional[str] = None
+    actor_full_name: Optional[str] = None
     detail: Optional[dict] = None
 
 

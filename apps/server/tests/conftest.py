@@ -1,53 +1,49 @@
-import os
+from datetime import datetime, timezone
 
 import pytest
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
+from pymongo import MongoClient
 
-TEST_URL = os.environ.get(
-    "TEST_DATABASE_URL",
-    "postgresql+psycopg://bo_app:bo_app_pw@localhost:5432/bureau_ordre_test",
-)
+from app.core.config import settings
+from app.core.security import hash_password
+
+TEST_DB = "bureau_ordre_test"
 
 
 @pytest.fixture(scope="session")
-def engine():
-    from app.db.base import Base
-    import app.models  # noqa: F401  (registers all tables)
-
-    eng = create_engine(TEST_URL, future=True)
-    with eng.begin() as c:
-        c.execute(text("CREATE EXTENSION IF NOT EXISTS pgcrypto"))
-    Base.metadata.drop_all(eng)
-    Base.metadata.create_all(eng)
-    return eng
+def mongo():
+    client = MongoClient(settings.mongodb_uri, tz_aware=True)
+    database = client[TEST_DB]
+    yield database
+    client.drop_database(TEST_DB)
+    client.close()
 
 
 @pytest.fixture(autouse=True)
-def _clean(engine):
-    """Start every test from an empty schema (the engine fixture is session-scoped)."""
-    with engine.begin() as c:
-        c.execute(
-            text(
-                "TRUNCATE app_user, mail_counter, mail_record, status_history, "
-                "attachment, audit_log RESTART IDENTITY CASCADE"
-            )
-        )
+def _clean(mongo):
+    for name in mongo.list_collection_names():
+        mongo[name].delete_many({})
     yield
 
 
 @pytest.fixture
-def Session(engine):
-    return sessionmaker(bind=engine, future=True, expire_on_commit=False)
+def db(mongo):
+    return mongo
 
 
 @pytest.fixture
-def admin_id(Session):
-    from app.models.user import AppUser
+def make_user(db):
+    def _make(username="amel", role="clerk", password="pw", full_name="Amel"):
+        doc = {
+            "username": username.lower(),
+            "full_name": full_name,
+            "password_hash": hash_password(password),
+            "role": role,
+            "preferred_locale": "fr",
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc),
+            "last_login_at": None,
+        }
+        doc["_id"] = db.users.insert_one(doc).inserted_id
+        return doc
 
-    with Session() as s:
-        u = AppUser(username="tester", full_name="Tester", password_hash="x", role="admin")
-        s.add(u)
-        s.commit()
-        s.refresh(u)
-        return u.id
+    return _make

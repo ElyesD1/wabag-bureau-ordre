@@ -1,139 +1,149 @@
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 
-from sqlalchemy import Date, Select, and_, cast, exists, func, or_, select
-from sqlalchemy.orm import Session
-
-from app.models.audit import Attachment
-from app.models.mail import MailRecord
+from pymongo.database import Database
 
 
-# --- status classification (dernier_statut is free text → fuzzy match) ---
-def _status():
-    return func.coalesce(MailRecord.dernier_statut, "")
+def _ci(term: str) -> dict:
+    return {"$regex": term, "$options": "i"}
 
 
-def closed_cond():
-    return _status().ilike("%clos%")
+def closed_q() -> dict:
+    return {"dernier_statut": _ci("clos")}
 
 
-def cancelled_cond():
-    return _status().ilike("%annul%")
+def cancelled_q() -> dict:
+    return {"dernier_statut": _ci("annul")}
 
 
-def pending_cond():
-    return _status().ilike("%attente%")
+def pending_q() -> dict:
+    return {"dernier_statut": _ci("attente")}
 
 
-def open_cond():
-    return and_(~closed_cond(), ~cancelled_cond())
+def open_q() -> dict:
+    return {"$nor": [closed_q(), cancelled_q()]}
 
 
-def no_pdf_cond():
-    return ~exists().where(Attachment.mail_record_id == MailRecord.id)
+def _today_dt() -> datetime:
+    t = date.today()
+    return datetime(t.year, t.month, t.day, tzinfo=timezone.utc)
 
 
-def overdue_cond(overdue_days: int):
-    return and_(
-        open_cond(),
-        or_(
-            MailRecord.date_enregistrement < (func.current_date() - overdue_days),
-            and_(
-                MailRecord.date_remise_destinataire.isnot(None),
-                MailRecord.date_remise_destinataire < func.current_date(),
-            ),
-        ),
-    )
+def overdue_q(overdue_days: int) -> dict:
+    today = _today_dt()
+    cutoff = today - timedelta(days=overdue_days)
+    return {
+        "$and": [
+            open_q(),
+            {
+                "$or": [
+                    {"date_enregistrement": {"$lt": cutoff}},
+                    {"date_remise_destinataire": {"$ne": None, "$lt": today}},
+                ]
+            },
+        ]
+    }
 
 
-def apply_bucket(stmt: Select, bucket: str | None, overdue_days: int) -> Select:
-    """Quick monitor filters shared by the journal list and the Suivi view."""
+def apply_bucket(db: Database, f: dict, bucket: str | None, overdue_days: int) -> dict:
     if bucket == "overdue":
-        return stmt.where(overdue_cond(overdue_days))
+        return {"$and": [f, overdue_q(overdue_days)]}
     if bucket == "no_pdf":
-        return stmt.where(no_pdf_cond())
+        with_pdf = db.attachments.distinct("mail_id")
+        return {**f, "_id": {"$nin": with_pdf}}
     if bucket == "open":
-        return stmt.where(open_cond())
+        return {**f, **open_q()}
     if bucket == "pending":
-        return stmt.where(pending_cond())
-    return stmt
+        return {**f, **pending_q()}
+    return f
 
 
-def register_insights(db: Session, code: str, year: int, overdue_days: int) -> dict:
+def register_insights(db: Database, code: str, year: int, overdue_days: int) -> dict:
+    scope = {"register": code, "year": year}
     today = date.today()
-    scope = (MailRecord.register == code, MailRecord.year == year)
+    today_dt = _today_dt()
+    month_start = datetime(today.year, today.month, 1, tzinfo=timezone.utc)
+    next_month = datetime(today.year + (today.month // 12), (today.month % 12) + 1, 1, tzinfo=timezone.utc)
 
-    def cnt(*conds) -> int:
-        return db.scalar(select(func.count()).select_from(MailRecord).where(*scope, *conds)) or 0
+    with_pdf = db.attachments.distinct("mail_id")
 
-    total = cnt()
-    closed = cnt(closed_cond())
-    cancelled = cnt(cancelled_cond())
-    pending = cnt(pending_cond())
-    open_count = cnt(open_cond())
-    overdue = cnt(overdue_cond(overdue_days))
-    no_pdf = cnt(no_pdf_cond())
-    no_pdf_open = cnt(open_cond(), no_pdf_cond())
-    this_month = cnt(func.extract("month", MailRecord.date_enregistrement) == today.month)
+    total = db.mail.count_documents(scope)
+    closed = db.mail.count_documents({**scope, **closed_q()})
+    cancelled = db.mail.count_documents({**scope, **cancelled_q()})
+    pending = db.mail.count_documents({**scope, **pending_q()})
+    open_count = db.mail.count_documents({**scope, **open_q()})
+    overdue = db.mail.count_documents({"$and": [scope, overdue_q(overdue_days)]})
+    no_pdf = db.mail.count_documents({**scope, "_id": {"$nin": with_pdf}})
+    no_pdf_open = db.mail.count_documents({**scope, **open_q(), "_id": {"$nin": with_pdf}})
+    this_month = db.mail.count_documents({**scope, "date_enregistrement": {"$gte": month_start, "$lt": next_month}})
 
     by_status = [
-        {"status": s or "—", "count": c}
-        for s, c in db.execute(
-            select(MailRecord.dernier_statut, func.count())
-            .where(*scope)
-            .group_by(MailRecord.dernier_statut)
-            .order_by(func.count().desc())
-        ).all()
+        {"status": g["_id"] or "—", "count": g["count"]}
+        for g in db.mail.aggregate([
+            {"$match": scope},
+            {"$group": {"_id": "$dernier_statut", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+        ])
+    ]
+    by_type = [
+        {"type": g["_id"], "count": g["count"]}
+        for g in db.mail.aggregate([
+            {"$match": scope},
+            {"$group": {"_id": "$type_document", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+        ])
     ]
 
-    age = func.current_date() - MailRecord.date_enregistrement
+    bucket_counts = {0: 0, 4: 0, 8: 0, 16: 0}
+    for g in db.mail.aggregate([
+        {"$match": {**scope, **open_q()}},
+        {"$addFields": {"age": {"$dateDiff": {"startDate": "$date_enregistrement", "endDate": "$$NOW", "unit": "day"}}}},
+        {"$bucket": {"groupBy": "$age", "boundaries": [0, 4, 8, 16, 100000], "default": -1, "output": {"count": {"$sum": 1}}}},
+    ]):
+        bucket_counts[g["_id"] if g["_id"] in bucket_counts else 16] += g["count"]
     aging = [
-        {"bucket": "0-3j", "count": cnt(open_cond(), age.between(0, 3))},
-        {"bucket": "4-7j", "count": cnt(open_cond(), age.between(4, 7))},
-        {"bucket": "8-15j", "count": cnt(open_cond(), age.between(8, 15))},
-        {"bucket": "15j+", "count": cnt(open_cond(), age > 15)},
+        {"bucket": "0-3j", "count": bucket_counts[0]},
+        {"bucket": "4-7j", "count": bucket_counts[4]},
+        {"bucket": "8-15j", "count": bucket_counts[8]},
+        {"bucket": "15j+", "count": bucket_counts[16]},
     ]
 
-    avg_proc = db.scalar(
-        select(func.avg(cast(MailRecord.modified_at, Date) - MailRecord.date_enregistrement)).where(
-            *scope, closed_cond(), MailRecord.modified_at.isnot(None)
-        )
-    )
-    avg_processing_days = round(float(avg_proc), 1) if avg_proc is not None else None
+    proc = list(db.mail.aggregate([
+        {"$match": {**scope, **closed_q(), "modified_at": {"$ne": None}}},
+        {"$addFields": {"proc": {"$dateDiff": {"startDate": "$date_enregistrement", "endDate": "$modified_at", "unit": "day"}}}},
+        {"$group": {"_id": None, "avg": {"$avg": "$proc"}}},
+    ]))
+    avg_processing_days = round(proc[0]["avg"], 1) if proc and proc[0]["avg"] is not None else None
 
-    projet_label = func.coalesce(MailRecord.projet, "—")
     by_projet = [
-        {"projet": p, "count": c}
-        for p, c in db.execute(
-            select(projet_label, func.count())
-            .where(*scope, open_cond())
-            .group_by(projet_label)
-            .order_by(func.count().desc())
-            .limit(6)
-        ).all()
+        {"projet": g["_id"], "count": g["count"]}
+        for g in db.mail.aggregate([
+            {"$match": {**scope, **open_q()}},
+            {"$group": {"_id": {"$ifNull": ["$projet", "—"]}, "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+            {"$limit": 6},
+        ])
     ]
 
-    watch_rows = db.execute(
-        select(MailRecord, exists().where(Attachment.mail_record_id == MailRecord.id))
-        .where(*scope, open_cond())
-        .order_by(MailRecord.date_enregistrement.asc())
-        .limit(8)
-    ).all()
+    docs = list(db.mail.find({**scope, **open_q()}).sort("date_enregistrement", 1).limit(8))
+    ids = [d["_id"] for d in docs]
+    have_pdf = set(db.attachments.distinct("mail_id", {"mail_id": {"$in": ids}}))
     watch = []
-    for rec, has_pdf in watch_rows:
-        age_days = (today - rec.date_enregistrement).days
-        is_overdue = age_days > overdue_days or (
-            rec.date_remise_destinataire is not None and rec.date_remise_destinataire < today
-        )
+    for d in docs:
+        reg_date = d["date_enregistrement"].date() if isinstance(d.get("date_enregistrement"), datetime) else d.get("date_enregistrement")
+        age_days = (today - reg_date).days if reg_date else 0
+        remise = d.get("date_remise_destinataire")
+        remise_d = remise.date() if isinstance(remise, datetime) else remise
+        is_overdue = age_days > overdue_days or (remise_d is not None and remise_d < today)
         watch.append({
-            "id": str(rec.id),
-            "no_ordre": rec.no_ordre,
-            "objet": rec.objet,
-            "expediteur": rec.expediteur,
-            "dernier_statut": rec.dernier_statut,
-            "date_enregistrement": rec.date_enregistrement.isoformat(),
+            "id": str(d["_id"]),
+            "no_ordre": d["no_ordre"],
+            "objet": d.get("objet"),
+            "expediteur": d.get("expediteur"),
+            "dernier_statut": d.get("dernier_statut"),
+            "date_enregistrement": reg_date.isoformat() if reg_date else None,
             "age_days": age_days,
             "overdue": bool(is_overdue),
-            "has_pdf": bool(has_pdf),
+            "has_pdf": d["_id"] in have_pdf,
         })
 
     return {

@@ -1,0 +1,30 @@
+# Render Blueprint — deploys the WABAG Bureau d'Ordre API (FastAPI + MongoDB).
+# In Render: New ▸ Blueprint ▸ connect the GitHub repo. Render reads this file.
+# Set the secret env vars (MONGODB_URI, SEED_ADMIN_PASSWORD) in the dashboard.
+services:
+  - type: web
+    name: wabag-bureau-ordre-api
+    runtime: python
+    rootDir: apps/server
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health/version
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: MONGODB_URI
+        sync: false # ← set in the dashboard (Atlas connection string, secret)
+      - key: MONGODB_DB
+        value: bureau_ordre
+      - key: JWT_SECRET
+        generateValue: true # Render generates a strong random secret
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: SEED_ADMIN_USERNAME
+        value: admin
+      - key: SEED_ADMIN_PASSWORD
+        sync: false # ← set in the dashboard; first admin is created on first boot
+      - key: SEED_ADMIN_FULLNAME
+        value: "Administrateur BO"

@@ -1,29 +1,22 @@
-import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import exists, func, select
-from sqlalchemy.orm import Session
+from pymongo.database import Database
 
-from app.core.deps import get_current_user, get_db
-from app.models.audit import Attachment
-from app.models.history import StatusHistory
-from app.models.mail import MailRecord
-from app.models.user import AppUser
+from app.core.deps import get_current_user, get_db, oid
 from app.schemas.mail import (
-    AttachmentOut,
     MailCreate,
     MailDetailOut,
     MailOut,
     MailUpdate,
     PageOut,
-    StatusHistoryOut,
     StatusUpdate,
 )
 from app.services.audit import log_action
 from app.services.insights import apply_bucket
 from app.services.numbering import allocate_and_insert
-from app.services.queries import build_mail_query
+from app.services.queries import build_mail_filter
+from app.services.serialize import serialize_mail, to_datetime
 
 router = APIRouter(tags=["documents"])
 _REG = {"entree": "E", "sortie": "S"}
@@ -35,30 +28,24 @@ def _reg_code(register: str) -> str:
     return _REG[register]
 
 
+def _has_pdf(db: Database, mail_id) -> bool:
+    return db.attachments.find_one({"mail_id": mail_id}) is not None
+
+
 @router.post("/registers/{register}/documents", response_model=MailOut, status_code=201)
-def saisie(
-    register: str,
-    body: MailCreate,
-    db: Session = Depends(get_db),
-    user: AppUser = Depends(get_current_user),
-) -> MailRecord:
+def saisie(register: str, body: MailCreate, db: Database = Depends(get_db), user: dict = Depends(get_current_user)):
     code = _reg_code(register)
-    rec = allocate_and_insert(
-        db, register=code, created_by=user.id, data=body.model_dump(exclude_none=True)
-    )
-    db.add(
-        StatusHistory(
-            mail_record_id=rec.id,
-            old_status=None,
-            new_status=rec.dernier_statut,
-            changed_by=user.id,
-        )
-    )
-    log_action(db, actor_id=user.id, action="create_record",
-               entity="mail_record", entity_id=str(rec.id))
-    db.commit()
-    db.refresh(rec)
-    return rec
+    rec = allocate_and_insert(db, register=code, created_by=user["_id"], data=body.model_dump(exclude_none=True))
+    db.status_history.insert_one({
+        "mail_id": rec["_id"],
+        "old_status": None,
+        "new_status": rec.get("dernier_statut"),
+        "changed_by": user["_id"],
+        "changed_at": datetime.now(timezone.utc),
+        "note": None,
+    })
+    log_action(db, actor_id=user["_id"], action="create_record", entity="mail", entity_id=str(rec["_id"]))
+    return serialize_mail(rec, has_pdf=False)
 
 
 @router.get("/registers/{register}/documents", response_model=PageOut)
@@ -72,97 +59,71 @@ def consultation(
     overdue_days: int = Query(7, ge=1, le=365),
     page: int = Query(1, ge=1),
     page_size: int = Query(25, ge=1, le=200),
-    db: Session = Depends(get_db),
-    _: AppUser = Depends(get_current_user),
+    db: Database = Depends(get_db),
+    _: dict = Depends(get_current_user),
 ) -> PageOut:
     code = _reg_code(register)
-    stmt = build_mail_query(code, q=q, type_document=type_document, statut=statut, projet=projet)
-    stmt = apply_bucket(stmt, bucket, overdue_days)
-    total = db.scalar(select(func.count()).select_from(stmt.subquery()))
-    has_pdf_expr = exists().where(Attachment.mail_record_id == MailRecord.id)
-    rows = db.execute(
-        stmt.add_columns(has_pdf_expr)
-        .order_by(MailRecord.seq.desc())
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-    ).all()
-    items = []
-    for rec, has_pdf in rows:
-        out = MailOut.model_validate(rec)
-        out.has_pdf = bool(has_pdf)
-        items.append(out)
-    return PageOut(items=items, total=total or 0, page=page, page_size=page_size)
+    f = build_mail_filter(code, q=q, type_document=type_document, statut=statut, projet=projet)
+    f = apply_bucket(db, f, bucket, overdue_days)
+    total = db.mail.count_documents(f)
+    docs = list(db.mail.find(f).sort("seq", -1).skip((page - 1) * page_size).limit(page_size))
+    ids = [d["_id"] for d in docs]
+    have = set(db.attachments.distinct("mail_id", {"mail_id": {"$in": ids}}))
+    items = [serialize_mail(d, has_pdf=d["_id"] in have) for d in docs]
+    return PageOut(items=items, total=total, page=page, page_size=page_size)
 
 
 @router.patch("/documents/{doc_id}/status", response_model=MailOut)
-def update_status(
-    doc_id: uuid.UUID,
-    body: StatusUpdate,
-    db: Session = Depends(get_db),
-    user: AppUser = Depends(get_current_user),
-) -> MailRecord:
-    rec = db.get(MailRecord, doc_id)
-    if rec is None:
+def update_status(doc_id: str, body: StatusUpdate, db: Database = Depends(get_db), user: dict = Depends(get_current_user)):
+    mid = oid(doc_id)
+    doc = db.mail.find_one({"_id": mid})
+    if doc is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Document introuvable")
-    old = rec.dernier_statut
-    rec.dernier_statut = body.new_status
-    rec.modified_by = user.id
-    rec.modified_at = datetime.now(timezone.utc)
-    db.add(
-        StatusHistory(
-            mail_record_id=rec.id,
-            old_status=old,
-            new_status=body.new_status,
-            changed_by=user.id,
-            note=body.note,
-        )
-    )
-    log_action(db, actor_id=user.id, action="update_status",
-               entity="mail_record", entity_id=str(rec.id))
-    db.commit()
-    db.refresh(rec)
-    return rec
+    old = doc.get("dernier_statut")
+    now = datetime.now(timezone.utc)
+    db.mail.update_one({"_id": mid}, {"$set": {"dernier_statut": body.new_status, "modified_by": user["_id"], "modified_at": now}})
+    db.status_history.insert_one({
+        "mail_id": mid,
+        "old_status": old,
+        "new_status": body.new_status,
+        "changed_by": user["_id"],
+        "changed_at": now,
+        "note": body.note,
+    })
+    log_action(db, actor_id=user["_id"], action="update_status", entity="mail", entity_id=str(mid))
+    return serialize_mail(db.mail.find_one({"_id": mid}), has_pdf=_has_pdf(db, mid))
 
 
 @router.get("/documents/{doc_id}", response_model=MailDetailOut)
-def get_document(
-    doc_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    _: AppUser = Depends(get_current_user),
-) -> MailDetailOut:
-    rec = db.get(MailRecord, doc_id)
-    if rec is None:
+def get_document(doc_id: str, db: Database = Depends(get_db), _: dict = Depends(get_current_user)):
+    mid = oid(doc_id)
+    doc = db.mail.find_one({"_id": mid})
+    if doc is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Document introuvable")
-    history = db.scalars(
-        select(StatusHistory)
-        .where(StatusHistory.mail_record_id == doc_id)
-        .order_by(StatusHistory.changed_at.desc())
-    ).all()
-    att = db.scalar(select(Attachment).where(Attachment.mail_record_id == doc_id))
-    out = MailDetailOut.model_validate(rec)
-    out.history = [StatusHistoryOut.model_validate(h) for h in history]
-    out.has_pdf = att is not None
-    out.attachment = AttachmentOut.model_validate(att) if att else None
+    att = db.attachments.find_one({"mail_id": mid})
+    out = serialize_mail(doc, has_pdf=att is not None)
+    out["history"] = [
+        {"old_status": h.get("old_status"), "new_status": h.get("new_status"), "changed_at": h["changed_at"], "note": h.get("note")}
+        for h in db.status_history.find({"mail_id": mid}).sort("changed_at", -1)
+    ]
+    out["attachment"] = (
+        {"original_filename": att.get("original_filename"), "byte_size": att["byte_size"], "uploaded_at": att["uploaded_at"]}
+        if att else None
+    )
     return out
 
 
 @router.patch("/documents/{doc_id}", response_model=MailOut)
-def edit_document(
-    doc_id: uuid.UUID,
-    body: MailUpdate,
-    db: Session = Depends(get_db),
-    user: AppUser = Depends(get_current_user),
-) -> MailRecord:
-    rec = db.get(MailRecord, doc_id)
-    if rec is None:
+def edit_document(doc_id: str, body: MailUpdate, db: Database = Depends(get_db), user: dict = Depends(get_current_user)):
+    mid = oid(doc_id)
+    doc = db.mail.find_one({"_id": mid})
+    if doc is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Document introuvable")
     data = body.model_dump(exclude_unset=True)
-    for key, value in data.items():
-        setattr(rec, key, value)
-    rec.modified_by = user.id
-    rec.modified_at = datetime.now(timezone.utc)
-    log_action(db, actor_id=user.id, action="edit_document",
-               entity="mail_record", entity_id=str(rec.id))
-    db.commit()
-    db.refresh(rec)
-    return rec
+    if "date_remise_destinataire" in data:
+        data["date_remise_destinataire"] = to_datetime(data["date_remise_destinataire"])
+    data["modified_by"] = user["_id"]
+    data["modified_at"] = datetime.now(timezone.utc)
+    db.mail.update_one({"_id": mid}, {"$set": data})
+    log_action(db, actor_id=user["_id"], action="edit_document", entity="mail", entity_id=str(mid))
+    return serialize_mail(db.mail.find_one({"_id": mid}), has_pdf=_has_pdf(db, mid))

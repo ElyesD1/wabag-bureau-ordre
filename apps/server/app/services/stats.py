@@ -1,59 +1,40 @@
-from sqlalchemy import func, select
-from sqlalchemy.orm import Session
-
-from app.models.mail import MailRecord
+from pymongo.database import Database
 
 
-def dashboard(db: Session, year: int) -> dict:
-    """Aggregate counts for the dashboard for a given calendar year."""
-    month_expr = func.extract("month", MailRecord.date_enregistrement)
+def dashboard(db: Database, year: int) -> dict:
+    scope = {"year": year}
 
-    # totals per register
     totals = {"entree": 0, "sortie": 0}
-    for reg, count in db.execute(
-        select(MailRecord.register, func.count())
-        .where(MailRecord.year == year)
-        .group_by(MailRecord.register)
-    ).all():
-        totals["entree" if reg == "E" else "sortie"] = count
+    for g in db.mail.aggregate([{"$match": scope}, {"$group": {"_id": "$register", "count": {"$sum": 1}}}]):
+        totals["entree" if g["_id"] == "E" else "sortie"] = g["count"]
     totals["total"] = totals["entree"] + totals["sortie"]
 
     by_status = [
-        {"status": s or "—", "count": c}
-        for s, c in db.execute(
-            select(MailRecord.dernier_statut, func.count())
-            .where(MailRecord.year == year)
-            .group_by(MailRecord.dernier_statut)
-            .order_by(func.count().desc())
-        ).all()
+        {"status": g["_id"] or "—", "count": g["count"]}
+        for g in db.mail.aggregate([
+            {"$match": scope},
+            {"$group": {"_id": "$dernier_statut", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+        ])
     ]
-
     by_type = [
-        {"type": t, "count": c}
-        for t, c in db.execute(
-            select(MailRecord.type_document, func.count())
-            .where(MailRecord.year == year)
-            .group_by(MailRecord.type_document)
-            .order_by(func.count().desc())
-        ).all()
+        {"type": g["_id"], "count": g["count"]}
+        for g in db.mail.aggregate([
+            {"$match": scope},
+            {"$group": {"_id": "$type_document", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+        ])
     ]
 
     by_month = [{"month": i, "entree": 0, "sortie": 0} for i in range(1, 13)]
-    for m, reg, c in db.execute(
-        select(month_expr.label("m"), MailRecord.register, func.count())
-        .where(MailRecord.year == year)
-        .group_by(month_expr, MailRecord.register)
-    ).all():
-        by_month[int(m) - 1]["entree" if reg == "E" else "sortie"] = c
+    for g in db.mail.aggregate([
+        {"$match": scope},
+        {"$group": {"_id": {"m": {"$month": "$date_enregistrement"}, "r": "$register"}, "count": {"$sum": 1}}},
+    ]):
+        m = g["_id"]["m"]
+        by_month[m - 1]["entree" if g["_id"]["r"] == "E" else "sortie"] = g["count"]
 
-    pending = (
-        db.scalar(
-            select(func.count())
-            .select_from(MailRecord)
-            .where(MailRecord.year == year, MailRecord.dernier_statut.ilike("%attente%"))
-        )
-        or 0
-    )
+    pending = db.mail.count_documents({**scope, "dernier_statut": {"$regex": "attente", "$options": "i"}})
 
     return {
         "year": year,

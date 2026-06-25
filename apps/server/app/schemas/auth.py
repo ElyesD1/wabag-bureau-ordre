@@ -1,5 +1,3 @@
-import uuid
-
 from pydantic import BaseModel
 
 
@@ -15,10 +13,8 @@ class TokenOut(BaseModel):
 
 
 class UserOut(BaseModel):
-    id: uuid.UUID
+    id: str
     username: str
     full_name: str
     role: str
     preferred_locale: str
-
-    model_config = {"from_attributes": True}
