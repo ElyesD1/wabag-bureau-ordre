@@ -17,6 +17,7 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@tanstack/react-query": "^5.59.16",
+    "bonjour-service": "^1.4.2",
     "i18next": "^23.16.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

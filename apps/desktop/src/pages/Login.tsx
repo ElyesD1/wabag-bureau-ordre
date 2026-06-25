@@ -1,10 +1,7 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { IconWifi } from "../components/Icons";
-import { NetworkPanel } from "../components/NetworkPanel";
 import { Sillage } from "../components/Sillage";
-import { net, type NetState } from "../net/connection";
 import { useAuth } from "../store/auth";
 
 export function Login() {
@@ -15,15 +12,6 @@ export function Login() {
   const [p, setP] = useState("");
   const [err, setErr] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [netState, setNetState] = useState<NetState | null>(null);
-  const [netOpen, setNetOpen] = useState(false);
-
-  useEffect(() => {
-    net.getState().then((st) => {
-      setNetState(st);
-      if (!st.role) setNetOpen(true);
-    });
-  }, []);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -45,11 +33,6 @@ export function Login() {
         <Sillage className="echo login__echo-pulse" />
         <Sillage className="login__pulse" />
       </div>
-      <button className="net-chip" onClick={() => setNetOpen(true)}>
-        <span className={"net-dot " + (netState?.status || "")} />
-        <IconWifi width={15} height={15} />
-        {t(netState?.role === "host" ? "net.statusHosting" : netState?.role ? "net.statusConnected" : "net.statusSetup")}
-      </button>
       <form className="login__card" onSubmit={submit}>
         <img className="login__logo" src="./wabag-logo.png" alt="WABAG" />
         <p className="login__eyebrow">{t("login.eyebrow")}</p>
@@ -79,10 +62,6 @@ export function Login() {
           <span>v1.0</span>
         </div>
       </form>
-
-      {netOpen && netState && (
-        <NetworkPanel initialState={netState} forced={!netState.role} onClose={() => setNetOpen(false)} />
-      )}
     </section>
   );
 }
