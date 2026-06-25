@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../store/auth";
-import { IconActivity, IconGear, IconGrid, IconIn, IconOut, IconUsers } from "./Icons";
+import { IconActivity, IconGear, IconGrid, IconIn, IconLogout, IconOut, IconUsers } from "./Icons";
 import { Sillage } from "./Sillage";
 
 function useCount(register: string) {
@@ -69,14 +69,16 @@ export function Sidebar() {
       </nav>
 
       <div className="side__foot">
-        <button className="userchip" onClick={logout} title={t("nav.logout")}>
+        <div className="userchip">
           <span className="avatar">{initials}</span>
-          <span>
+          <span className="userchip__txt">
             <span className="userchip__name">{user?.full_name}</span>
-            <br />
             <span className="userchip__role">{user?.role === "admin" ? "Admin" : "Agent BO"}</span>
           </span>
-        </button>
+          <button className="side__logout" onClick={logout} aria-label={t("nav.logout")} title={t("nav.logout")}>
+            <IconLogout width={17} height={17} />
+          </button>
+        </div>
       </div>
     </aside>
   );

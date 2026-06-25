@@ -177,10 +177,9 @@
   "assistant": {
     "fab": "Assistant",
     "title": "Assistant Bureau d'Ordre",
-    "subtitle": "Aide intégrée — questions sur l'application",
-    "placeholder": "Posez une question…",
-    "go": "Y aller",
-    "send": "Envoyer"
+    "subtitle": "Aide intégrée — choisissez une question",
+    "pick": "Choisissez une question pour obtenir de l'aide.",
+    "go": "Y aller"
   },
   "net": {
     "title": "Réseau du Bureau d'Ordre",

@@ -177,10 +177,9 @@
   "assistant": {
     "fab": "Assistant",
     "title": "Bureau d'Ordre assistant",
-    "subtitle": "Built-in help — questions about the app",
-    "placeholder": "Ask a question…",
-    "go": "Go there",
-    "send": "Send"
+    "subtitle": "Built-in help — pick a question",
+    "pick": "Pick a question to get help.",
+    "go": "Go there"
   },
   "net": {
     "title": "Bureau d'Ordre network",

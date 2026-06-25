@@ -1,66 +1,33 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
-import { GREETING, SUGGESTIONS, type Intent } from "../assistant/kb";
-import { match } from "../assistant/match";
+import { FAQ_GROUPS, type FaqItem } from "../assistant/kb";
 import i18n from "../i18n";
 import { IconClose } from "./Icons";
-
-interface Msg {
-  role: "user" | "bot";
-  text: string;
-  route?: string;
-}
 
 export function Assistant() {
   const { t } = useTranslation();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  const [messages, setMessages] = useState<Msg[]>([]);
-  const [input, setInput] = useState("");
-  const endRef = useRef<HTMLDivElement>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
   const lang = i18n.language.startsWith("en") ? "en" : "fr";
 
-  useEffect(() => {
-    if (!open || loaded) return;
-    setLoaded(true);
-    api.assistant
-      .history()
-      .then((h: { role: "user" | "bot"; text: string }[]) =>
-        setMessages(h.map((m) => ({ role: m.role, text: m.text }))),
-      )
-      .catch(() => {});
-  }, [open, loaded]);
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, open]);
-
-  function respond(userText: string, intent: Intent) {
-    const answer = lang === "en" ? intent.en : intent.fr;
-    setMessages((m) => [...m, { role: "user", text: userText }, { role: "bot", text: answer, route: intent.route }]);
-    api.assistant.log(userText, answer, intent.id).catch(() => {});
-  }
-
-  function send() {
-    const v = input.trim();
-    if (!v) return;
-    respond(v, match(v));
-    setInput("");
-  }
-
-  function pick(it: Intent) {
-    respond(lang === "en" ? it.chip!.en : it.chip!.fr, it);
+  function toggle(it: FaqItem) {
+    const next = openId === it.id ? null : it.id;
+    setOpenId(next);
+    if (next) {
+      // Record which question was opened (lightweight in-app analytics).
+      api.assistant
+        .log(lang === "en" ? it.q.en : it.q.fr, lang === "en" ? it.en : it.fr, it.id)
+        .catch(() => {});
+    }
   }
 
   function goTo(route: string) {
     nav(route);
     setOpen(false);
   }
-
-  const showStart = messages.length === 0;
 
   return (
     <>
@@ -86,48 +53,41 @@ export function Assistant() {
               <b>{t("assistant.title")}</b>
               <small>{t("assistant.subtitle")}</small>
             </div>
-            <button className="asst-x" onClick={() => setOpen(false)} aria-label="Fermer">
+            <button className="asst-x" onClick={() => setOpen(false)} aria-label={t("common.close")}>
               <IconClose width={16} height={16} />
             </button>
           </div>
 
-          <div className="asst-body">
-            {showStart && <div className="asst-msg bot">{GREETING[lang]}</div>}
-            {messages.map((m, i) => (
-              <div key={i} className={"asst-msg " + m.role}>
-                {m.text}
-                {m.role === "bot" && m.route && (
-                  <button className="asst-go" onClick={() => goTo(m.route!)}>
-                    {t("assistant.go")} →
-                  </button>
-                )}
+          <div className="asst-faq">
+            <p className="asst-faq__intro">{t("assistant.pick")}</p>
+            {FAQ_GROUPS.map((g) => (
+              <div className="asst-grp" key={g.id}>
+                <div className="asst-grp__label">{lang === "en" ? g.en : g.fr}</div>
+                {g.items.map((it) => {
+                  const isOpen = openId === it.id;
+                  return (
+                    <div className={"asst-item" + (isOpen ? " open" : "")} key={it.id}>
+                      <button className="asst-q" onClick={() => toggle(it)} aria-expanded={isOpen}>
+                        <span>{lang === "en" ? it.q.en : it.q.fr}</span>
+                        <svg className="asst-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </button>
+                      {isOpen && (
+                        <div className="asst-a">
+                          {lang === "en" ? it.en : it.fr}
+                          {it.route && (
+                            <button className="asst-go" onClick={() => goTo(it.route!)}>
+                              {t("assistant.go")} →
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ))}
-            <div ref={endRef} />
-          </div>
-
-          {showStart && (
-            <div className="asst-chips">
-              {SUGGESTIONS.map((s) => (
-                <button key={s.id} onClick={() => pick(s)}>
-                  {lang === "en" ? s.chip!.en : s.chip!.fr}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="asst-input">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && send()}
-              placeholder={t("assistant.placeholder")}
-            />
-            <button onClick={send} disabled={!input.trim()} aria-label={t("assistant.send")}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 2 11 13" /><path d="M22 2 15 22l-4-9-9-4 20-7Z" />
-              </svg>
-            </button>
           </div>
         </div>
       )}
