@@ -231,7 +231,9 @@ ipcMain.handle("report:printToPDF", async (_e, html) => {
 
 // Single-instance: a second launch focuses the existing window instead of
 // spawning a second embedded server.
-if (!app.requestSingleInstanceLock()) {
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+dbg("[bo] single-instance lock:", gotSingleInstanceLock);
+if (!gotSingleInstanceLock) {
   app.quit();
 } else {
   app.on("second-instance", () => {
@@ -243,7 +245,12 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   app.whenReady().then(async () => {
-    createSplash();
+    dbg("[bo] whenReady fired");
+    try {
+      createSplash();
+    } catch (e) {
+      dbg("[bo] createSplash failed (non-fatal):", e && e.message);
+    }
     let url = null;
     try {
       url = await startServer();
