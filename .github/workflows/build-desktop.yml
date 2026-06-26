@@ -49,8 +49,9 @@ jobs:
           pyinstaller --onedir --noconfirm --clean --name bo-server \
             --collect-all uvicorn --collect-all pymongo --collect-all dns \
             --collect-all argon2 --collect-all passlib --collect-all openpyxl \
-            --collect-all pydantic --collect-all pydantic_core \
-            --hidden-import multipart --hidden-import passlib.handlers.argon2 \
+            --collect-all pydantic --collect-all pydantic_core --collect-all certifi \
+            --collect-all _argon2_cffi_bindings --collect-all cffi \
+            --hidden-import multipart --hidden-import passlib.handlers.argon2 --hidden-import _cffi_backend \
             --distpath ./pyi-dist --workpath ./pyi-build --specpath ./pyi-build \
             run_local.py
       - name: Build installers

@@ -7,8 +7,8 @@ const { spawn } = require("node:child_process");
 
 const isDev = !!process.env.ELECTRON_DEV;
 const tokenFile = path.join(app.getPath("userData"), "token.bin");
-// Per-machine server log (handy for supporting the few installs).
 const dbgLog = path.join(app.getPath("userData"), "bo-server.log");
+const childLog = path.join(app.getPath("userData"), "bo-server-child.log");
 function dbg(...a) {
   try {
     fs.appendFileSync(dbgLog, a.map(String).join(" ") + "\n");
@@ -21,6 +21,7 @@ function dbg(...a) {
 // database. No hosting, no LAN sharing — the database is the only shared layer.
 // ---------------------------------------------------------------------------
 let serverProc = null;
+let splash = null;
 
 function serverBinaryPath() {
   const exe = process.platform === "win32" ? "bo-server.exe" : "bo-server";
@@ -41,7 +42,6 @@ function readServerConfig() {
 }
 
 // A JWT secret unique to this machine, persisted so logins survive restarts.
-// Tokens never leave the machine, so each install having its own secret is fine.
 function getJwtSecret() {
   const p = path.join(app.getPath("userData"), "jwt.secret");
   try {
@@ -67,11 +67,13 @@ function getFreePort() {
   });
 }
 
-async function waitForHealth(url, ms = 30000) {
+// Polls the REAL readiness probe (/health/ready pings Atlas), so the app only
+// appears once the database is actually reachable — not merely when the port binds.
+async function waitForHealth(url, ms = 35000) {
   const deadline = Date.now() + ms;
   while (Date.now() < deadline) {
     try {
-      const res = await fetch(url + "/health/version");
+      const res = await fetch(url + "/health/ready");
       if (res.ok) return true;
     } catch {}
     await new Promise((r) => setTimeout(r, 400));
@@ -79,14 +81,20 @@ async function waitForHealth(url, ms = 30000) {
   return false;
 }
 
-// Returns the local server base URL, or null if it could not be started
-// (e.g. dev with no bundled binary — the renderer then falls back to VITE_API_URL).
+// Returns the local server base URL, or null if it could not be started.
 async function startServer() {
   const bin = serverBinaryPath();
   const cfg = readServerConfig();
   dbg("[bo] binary:", bin, "exists:", fs.existsSync(bin));
   dbg("[bo] config:", cfg && cfg.mongodbUri ? "loaded" : "MISSING");
   if (!fs.existsSync(bin) || !cfg || !cfg.mongodbUri) return null;
+
+  // Capture the server's stdout/stderr (incl. Python tracebacks) for support —
+  // a single ImportError line turns a black-box field failure into a 2-min fix.
+  let childFd;
+  try {
+    childFd = fs.openSync(childLog, "a");
+  } catch {}
 
   const port = await getFreePort();
   const url = `http://127.0.0.1:${port}`;
@@ -100,26 +108,56 @@ async function startServer() {
       JWT_SECRET: getJwtSecret(),
       CORS_ORIGINS: "*",
     },
-    stdio: "ignore",
+    stdio: childFd ? ["ignore", childFd, childFd] : "ignore",
     windowsHide: true,
   });
-  serverProc.on("error", (e) => console.error("[bo] spawn error:", e.message));
+  serverProc.on("error", (e) => dbg("[bo] spawn error:", e && e.message));
   serverProc.on("exit", (code, sig) => {
     dbg("[bo] server exited code=", code, "sig=", sig);
     serverProc = null;
   });
   const ok = await waitForHealth(url);
-  dbg("[bo] health reachable:", ok);
+  dbg("[bo] ready:", ok);
   return ok ? url : null;
 }
 
 function stopServer() {
-  if (serverProc) {
-    try {
+  if (!serverProc) return;
+  const pid = serverProc.pid;
+  try {
+    if (process.platform === "win32" && pid) {
+      // SIGTERM doesn't reliably kill the PyInstaller process tree on Windows.
+      spawn("taskkill", ["/PID", String(pid), "/T", "/F"], { stdio: "ignore", windowsHide: true });
+    } else {
       serverProc.kill();
-    } catch {}
-    serverProc = null;
-  }
+    }
+  } catch {}
+  serverProc = null;
+}
+
+// Lightweight splash shown instantly so launch never looks frozen while the
+// server boots + the first Atlas handshake completes.
+function createSplash() {
+  splash = new BrowserWindow({
+    width: 440,
+    height: 280,
+    frame: false,
+    resizable: false,
+    center: true,
+    backgroundColor: "#08365F",
+    show: true,
+  });
+  const html =
+    '<!doctype html><meta charset="utf-8"><body style="margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#08365F;color:#eaf3fb;font-family:system-ui,-apple-system,Segoe UI,sans-serif;gap:18px">' +
+    '<div style="font-size:20px;font-weight:700;letter-spacing:.04em">WABAG · Bureau d\'Ordre</div>' +
+    '<div style="font-size:13px;color:#9fc1de">Démarrage du serveur local…</div>' +
+    '<div style="width:34px;height:34px;border:3px solid rgba(255,255,255,.18);border-top-color:#2fa4db;border-radius:50%;animation:s 1s linear infinite"></div>' +
+    "<style>@keyframes s{to{transform:rotate(360deg)}}</style></body>";
+  splash.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
+}
+function closeSplash() {
+  if (splash && !splash.isDestroyed()) splash.close();
+  splash = null;
 }
 
 function createWindow(serverUrl) {
@@ -137,7 +175,10 @@ function createWindow(serverUrl) {
       additionalArguments: serverUrl ? [`--server-url=${serverUrl}`] : [],
     },
   });
-  win.once("ready-to-show", () => win.show());
+  win.once("ready-to-show", () => {
+    closeSplash();
+    win.show();
+  });
   // Allow the in-app guide (guide.html) and the PDF viewer (blob URLs) to open
   // in their own window instead of being blocked.
   win.webContents.setWindowOpenHandler(() => ({ action: "allow" }));
@@ -188,27 +229,49 @@ ipcMain.handle("report:printToPDF", async (_e, html) => {
   return { saved: true, filePath };
 });
 
-app.whenReady().then(async () => {
-  let url = null;
-  try {
-    url = await startServer();
-  } catch (e) {
-    dbg("[bo] startServer threw:", e && e.message);
-  }
-  if (!url && app.isPackaged) {
-    dialog.showErrorBox(
-      "Bureau d'Ordre",
-      "Le serveur local n'a pas pu démarrer.\n\nVérifiez la connexion Internet (la base de données est en ligne), puis relancez l'application.",
-    );
-  }
-  createWindow(url);
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow(url);
+// Single-instance: a second launch focuses the existing window instead of
+// spawning a second embedded server.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    const w = BrowserWindow.getAllWindows().find((x) => x !== splash) || BrowserWindow.getAllWindows()[0];
+    if (w) {
+      if (w.isMinimized()) w.restore();
+      w.focus();
+    }
   });
-});
 
-app.on("before-quit", stopServer);
-app.on("quit", stopServer);
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
-});
+  app.whenReady().then(async () => {
+    createSplash();
+    let url = null;
+    try {
+      url = await startServer();
+    } catch (e) {
+      dbg("[bo] startServer threw:", e && e.message);
+    }
+    if (!url && app.isPackaged) {
+      closeSplash();
+      const blocked = !fs.existsSync(serverBinaryPath());
+      dialog.showErrorBox(
+        "Bureau d'Ordre",
+        blocked
+          ? "Le composant serveur a été bloqué ou supprimé par l'antivirus (Windows Defender).\n\n" +
+              "Ajoutez une exception pour le dossier d'installation de l'application, puis relancez-la."
+          : "Le serveur local n'a pas pu démarrer.\n\n" +
+              "Vérifiez la connexion Internet (la base de données est en ligne), puis relancez l'application.\n\n" +
+              "Journal : " + childLog,
+      );
+    }
+    createWindow(url);
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow(url);
+    });
+  });
+
+  app.on("before-quit", stopServer);
+  app.on("quit", stopServer);
+  app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") app.quit();
+  });
+}

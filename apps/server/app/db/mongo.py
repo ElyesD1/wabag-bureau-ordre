@@ -1,3 +1,4 @@
+import certifi
 import gridfs
 from pymongo import ASCENDING, MongoClient
 from pymongo.database import Database
@@ -5,7 +6,16 @@ from pymongo.database import Database
 from app.core.config import settings
 
 # One thread-safe client for the whole process (pymongo pools connections).
-_client = MongoClient(settings.mongodb_uri, serverSelectionTimeoutMS=8000, tz_aware=True)
+# tlsCAFile=certifi.where() pins the CA bundle so the TLS handshake to Atlas
+# succeeds in frozen/PyInstaller builds regardless of the host's system CA store
+# (without this, a bundled binary with no CA store times out connecting to Atlas).
+_client = MongoClient(
+    settings.mongodb_uri,
+    serverSelectionTimeoutMS=30000,
+    connectTimeoutMS=30000,
+    tz_aware=True,
+    tlsCAFile=certifi.where(),
+)
 
 
 def get_database(name: str | None = None) -> Database:

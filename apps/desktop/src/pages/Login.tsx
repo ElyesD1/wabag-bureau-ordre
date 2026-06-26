@@ -59,7 +59,7 @@ export function Login() {
           <span className="login__tag">
             sustainable solutions. <b>for a better life.</b>
           </span>
-          <span>v1.0.2</span>
+          <span>v1.0.3</span>
         </div>
       </form>
     </section>
